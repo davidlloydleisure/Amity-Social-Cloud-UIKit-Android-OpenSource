@@ -25,9 +25,9 @@ android {
 }
 
 dependencies {
-    api project(path: ':common')
-    api project(path: ':common-compose')
-    api project(path: ':social-compose')
+    api project(path: ':amity:common')
+    api project(path: ':amity:common-compose')
+    api project(path: ':amity:social-compose')
 
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
