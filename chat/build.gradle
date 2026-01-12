@@ -18,6 +18,6 @@ android {
 }
 
 dependencies {
-    api project(path: ':common')
-    api project(path: ':chat-compose')
+    api project(path: ':amity:common')
+    api project(path: ':amity:chat-compose')
 }
