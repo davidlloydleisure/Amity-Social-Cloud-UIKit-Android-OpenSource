@@ -217,15 +217,15 @@ class AmitySocialHomePageViewModel : AmityBaseViewModel() {
             fun from(
                 loadState: LoadState,
                 itemCount: Int,
+                previous: PostListState = EMPTY,
             ): PostListState {
-                return if (loadState is LoadState.Loading && itemCount == 0) {
-                    LOADING
-                } else if (loadState is LoadState.NotLoading && itemCount == 0) {
-                    EMPTY
-                } else if (loadState is LoadState.Error && itemCount == 0) {
-                    ERROR
-                } else {
-                    SUCCESS
+                return when {
+                    itemCount > 0 -> SUCCESS
+                    loadState is LoadState.Error -> ERROR
+                    loadState is LoadState.NotLoading && loadState.endOfPaginationReached -> EMPTY
+                    previous == SUCCESS -> SUCCESS
+                    loadState is LoadState.Loading -> LOADING
+                    else -> previous
                 }
             }
         }
