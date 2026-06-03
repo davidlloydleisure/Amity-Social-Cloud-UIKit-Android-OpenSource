@@ -121,6 +121,7 @@ fun AmityNewsFeedComponent(
                 AmitySocialHomePageViewModel.PostListState.from(
                     loadState = posts.loadState.refresh,
                     itemCount = posts.itemCount,
+                    previous = postListState,
                 ).let(viewModel::setPostListState)
 
                 item(key = "dummy_story_tab") {
