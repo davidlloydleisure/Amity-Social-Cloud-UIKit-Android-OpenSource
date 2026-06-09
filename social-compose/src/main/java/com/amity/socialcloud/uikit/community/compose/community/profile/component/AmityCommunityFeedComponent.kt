@@ -1,5 +1,6 @@
 package com.amity.socialcloud.uikit.community.compose.community.profile.component
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -29,6 +30,7 @@ fun AmityCommunityFeedComponent(
     pageScope: AmityComposePageScope? = null,
     communityId: String,
     shouldRefresh: Boolean = false,
+    contentPadding: PaddingValues = PaddingValues(),
 ) {
     val context = LocalContext.current
     val behavior by lazy {
@@ -87,7 +89,7 @@ fun AmityCommunityFeedComponent(
         }
     }
 
-    LazyColumn {
+    LazyColumn(contentPadding = contentPadding) {
         amityCommunityFeedLLS(
             modifier = modifier,
             pageScope = pageScope,

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import com.amity.socialcloud.sdk.model.core.pin.AmityPinnedPost
 import com.amity.socialcloud.sdk.model.social.post.AmityPost
@@ -83,7 +84,14 @@ fun LazyListScope.amityCommunityFeedLLS(
         }
     }
 
-    if (announcementPosts.itemCount == 0 && communityPosts.itemCount == 0) {
+    val isRefreshing = communityPosts.loadState.refresh is LoadState.Loading
+
+    if (isRefreshing && communityPosts.itemCount == 0) {
+        items(3) {
+            AmityPostShimmer()
+            AmityNewsFeedDivider()
+        }
+    } else if (!isRefreshing && announcementPosts.itemCount == 0 && communityPosts.itemCount == 0) {
         item {
             Box(
                 modifier = Modifier
