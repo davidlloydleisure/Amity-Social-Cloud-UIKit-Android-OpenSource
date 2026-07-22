@@ -44,6 +44,7 @@ import com.amity.socialcloud.uikit.community.compose.R
 import com.amity.socialcloud.uikit.community.compose.search.global.AmityGlobalSearchType
 import com.amity.socialcloud.uikit.community.compose.search.global.AmityGlobalSearchViewModel
 import com.amity.socialcloud.uikit.community.compose.localization.amitySocialString
+import com.amity.socialcloud.uikit.common.ui.theme.amityColorWhite
 
 @Composable
 fun AmityTopSearchBarComponent(
@@ -98,7 +99,7 @@ fun AmityTopSearchBarComponent(
                 elementId = "back_button"
             ) {
                 Icon(
-                    painter = painterResource(R.drawable.amity_ic_arrow_back),
+                    painter = painterResource(R.drawable.amity_ic_back),
                     contentDescription = "Back",
                     tint = AmityTheme.colors.base,
                     modifier = modifier
@@ -175,7 +176,7 @@ fun AmityTopSearchBarComponent(
                         ) {
                             Icon(
                                 painter = painterResource(id = R.drawable.amity_ic_close),
-                                tint = Color.White,
+                                tint = amityColorWhite,
                                 contentDescription = null,
                                 modifier = modifier
                                     .align(Alignment.Center)

@@ -68,6 +68,7 @@ import com.amity.socialcloud.uikit.community.compose.R
 import org.joda.time.DateTime
 import kotlin.math.max
 import com.amity.socialcloud.uikit.community.compose.localization.amitySocialString
+import com.amity.socialcloud.uikit.common.ui.theme.amityColorBlack
 
 @Composable
 fun ManageProductTagListComponent(
@@ -181,9 +182,9 @@ private fun TaggedProductsEmpty(
         verticalArrangement = Arrangement.Center,
         modifier = modifier.fillMaxSize()
     ) {
-        Icon(
+        Image(
             painter = painterResource(id = R.drawable.amity_ic_no_tagged_product),
-            contentDescription = null,
+            contentDescription = "Empty tagged products",
         )
 
         Spacer(modifier = modifier.size(8.dp))
@@ -207,7 +208,6 @@ private fun TaggedProductsEmpty(
 
         AddProductsButton(
             onAddProducts = onAddProducts,
-            componentTheme = componentTheme,
         )
     }
 }
@@ -329,7 +329,6 @@ fun TaggedProductsFilled(
         if (canManageProducts) {
             AddProductsButton(
                 onAddProducts = onAddProducts,
-                componentTheme = componentTheme,
                 isEnabled = taggedProducts.size < maxProductCount,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -401,8 +400,8 @@ private fun ProductTagCard(
                             .background(
                                 brush = Brush.verticalGradient(
                                     colors = listOf(
-                                        Color.Black.copy(alpha = 0.2f),
-                                        Color.Black.copy(alpha = 0.8f)
+                                        amityColorBlack.copy(alpha = 0.2f),
+                                        amityColorBlack.copy(alpha = 0.8f)
                                     )
                                 )
                             )
@@ -428,7 +427,7 @@ private fun ProductTagCard(
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(Color.Black.copy(alpha = 0.6f)),
+                            .background(amityColorBlack.copy(alpha = 0.6f)),
                         contentAlignment = Alignment.Center
                     ) {}
                 }
@@ -521,7 +520,7 @@ private fun ProductTagCard(
                                 Text(
                                     text = amitySocialString("amity_social_button_view"),
                                     style = AmityTheme.typography.captionBold.copy(
-                                        color = Color.White
+                                        color = AmityTheme.colors.baseInverse
                                     )
                                 )
                             }
@@ -540,7 +539,7 @@ private fun DeleteProductButton(onRemoveClick: () -> Unit) {
             .size(28.dp)
             .border(
                 width = 1.dp,
-                color = AmityTheme.colors.secondaryShade3,
+                color = AmityTheme.colors.secondaryShade2,
                 shape = RoundedCornerShape(6.dp)
             )
             .padding(horizontal = 8.dp, vertical = 6.dp)
@@ -551,7 +550,7 @@ private fun DeleteProductButton(onRemoveClick: () -> Unit) {
             painterResource(R.drawable.amity_ic_delete_trash),
             contentDescription = "Delete product",
             modifier = Modifier.size(16.dp),
-            colorFilter = ColorFilter.tint(Color(0xFFEBECEF))
+            colorFilter = ColorFilter.tint(AmityTheme.colors.base)
         )
     }
 }
@@ -565,7 +564,7 @@ private fun ProductActionButton(
         modifier = Modifier
             .border(
                 width = 1.dp,
-                color = Color.White,
+                color = AmityTheme.colors.baseInverse,
                 shape = RoundedCornerShape(6.dp)
             )
             .wrapContentWidth()
@@ -578,7 +577,7 @@ private fun ProductActionButton(
         Image(
             painter = painterResource(id = R.drawable.amity_ic_product_tagging_pin_outlined),
             contentDescription = "pin toggle",
-            colorFilter = ColorFilter.tint(Color.White),
+            colorFilter = ColorFilter.tint(AmityTheme.colors.baseInverse),
             modifier = Modifier.size(16.dp)
         )
         Spacer(Modifier.width(4.dp))
@@ -586,7 +585,7 @@ private fun ProductActionButton(
             text = if (isPinned) amitySocialString("amity_social_label_unpin_label")
                    else amitySocialString("amity_social_label_pin_label"),
             style = AmityTheme.typography.captionBold,
-            color = Color.White,
+            color = AmityTheme.colors.baseInverse,
         )
     }
 }
@@ -594,24 +593,26 @@ private fun ProductActionButton(
 @Composable
 private fun AddProductsButton(
     modifier: Modifier = Modifier,
+    isEmpty: Boolean = false,
     isEnabled: Boolean = true,
     onAddProducts: () -> Unit,
-    componentTheme: AmityUIKitConfig.UIKitTheme?
 ) {
-    val borderColor = if (isEnabled) {
-        componentTheme?.baseInverseColor?.asColor() ?: AmityTheme.colors.baseInverse
+    val borderColor = if (isEmpty) {
+        AmityTheme.colors.base
+    } else if (isEnabled) {
+        AmityTheme.colors.secondaryShade3
     } else {
-        componentTheme?.baseShade4Color?.asColor() ?: AmityTheme.colors.baseShade4
+        AmityTheme.colors.secondaryShade4
     }
     val textColor = if (isEnabled) {
-        componentTheme?.baseInverseColor?.asColor() ?: AmityTheme.colors.baseInverse
+        AmityTheme.colors.base
     } else {
-        componentTheme?.baseShade3Color?.asColor() ?: AmityTheme.colors.baseShade3
+        AmityTheme.colors.secondaryShade3
     }
     OutlinedButton(
         modifier = modifier,
         onClick = onAddProducts,
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(8.dp),
         border = BorderStroke(
             1.dp,
           borderColor

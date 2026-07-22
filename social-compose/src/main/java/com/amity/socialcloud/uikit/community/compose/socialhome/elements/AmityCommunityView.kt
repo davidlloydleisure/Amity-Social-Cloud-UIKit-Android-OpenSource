@@ -169,7 +169,6 @@ fun AmityJoinCommunityView(
     community: AmityCommunity,
     joinRequest: AmityJoinRequest? = null,
     label: String? = null,
-    showLabelOnAvatar: Boolean = true,
     onClick: (AmityCommunity) -> Unit,
 ) {
     Row(
@@ -190,7 +189,7 @@ fun AmityJoinCommunityView(
             AmityCommunityAvatarWithLabelView(
                 community = community,
                 modifier = modifier.testTag(getAccessibilityId()),
-                label = if (showLabelOnAvatar) label else null
+                label = label
             )
         }
 
@@ -205,13 +204,6 @@ fun AmityJoinCommunityView(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = label ?: "",
-                    style = AmityTheme.typography.bodyBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-
                 if (!community.isPublic()) {
                     AmityBaseElement(
                         pageScope = pageScope,
