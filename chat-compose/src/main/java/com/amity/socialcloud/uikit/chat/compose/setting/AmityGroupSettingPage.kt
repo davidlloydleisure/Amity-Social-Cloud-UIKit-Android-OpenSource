@@ -196,10 +196,9 @@ fun AmityGroupSettingPage(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                SectionHeader(text = amityChatString("chat.group.settings.section"))
-
-                // Moderator section (moderator only)
                 if (isModerator) {
+                    SectionHeader(text = amityChatString("chat.group.settings.section"))
+
                     Spacer(modifier = Modifier.height(8.dp))
 
                     SettingItem(
@@ -263,21 +262,6 @@ fun AmityGroupSettingPage(
                     )
                 }
 
-                // All users section
-                Spacer(modifier = Modifier.height(8.dp))
-
-                if (!isModerator) {
-                    SettingItem(
-                        text = amityChatString("chat.group.members.label"),
-                        iconResId = R.drawable.amity_ic_members_list,
-                        onClick = {
-                            context.startActivity(
-                                AmityGroupMemberListPageActivity.newIntent(context, channelId)
-                            )
-                        },
-                    )
-                }
-
                 // Your Preferences section (visible to all members)
                 Spacer(modifier = Modifier.height(8.dp))
                 SectionHeader(text = amityChatString("chat.your.preferences.section"))
@@ -286,7 +270,7 @@ fun AmityGroupSettingPage(
                     text = amityChatString("chat.notifications.title"),
                     iconResId = R.drawable.amity_ic_chat_notification,
                     trailingText = if (notificationsEnabled) amityChatString("chat.notifications.on")
-                                   else amityChatString("chat.notifications.off"),
+                    else amityChatString("chat.notifications.off"),
                     onClick = {
                         context.startActivity(
                             AmityGroupNotificationPreferencePageActivity.newIntent(context, channelId)

@@ -87,9 +87,9 @@
     <string name="amity_chat_your_preferences_section">Your preferences</string>
     <string name="amity_chat_edit_group_profile_navbar_title">Group profile</string>
     <string name="amity_chat_group_members">Member</string>
-    <string name="amity_chat_group_leave_confirm_title">Leave group</string>
-    <string name="amity_chat_group_leave">Leave group</string>
-    <string name="amity_chat_group_leave_confirm_message">If you leave this group, you will no longer see new activities or participate in this group.</string>
+    <string name="amity_chat_group_leave_confirm_title">Leave Chat</string>
+    <string name="amity_chat_group_leave">Leave Chat</string>
+    <string name="amity_chat_group_leave_confirm_message">If you leave this chat, you will no longer see new activities or participate in this chat.</string>
     <string name="amity_chat_group_leave_confirm_label">Leave</string>
 
     <string name="amity_chat_group_leave_last_mod_title">You\'re the last moderator</string>
