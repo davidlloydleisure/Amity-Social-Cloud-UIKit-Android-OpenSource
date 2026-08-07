@@ -99,6 +99,9 @@
     <string name="amity_chat_group_leave_confirm_message">If you leave this group, you will no longer see new activities or participate in this group.</string>
     <string name="amity_chat_group_leave_confirm_label">Leave</string>
     <string name="amity_chat_group_leave_toast">Group chat left.</string>
+    <string name="amity_chat_group_leave_customized">Leave Chat</string>
+    <string name="amity_chat_group_leave_confirm_title_customized">Leave Chat</string>
+    <string name="amity_chat_group_leave_confirm_message_customized">If you leave this chat, you will no longer see new activities or participate in this chat.</string>
 
     <string name="amity_chat_group_leave_last_mod_title">You\'re the last moderator</string>
     <string name="amity_chat_group_leave_last_mod_message">You must promote another member to moderator before leaving.</string>
