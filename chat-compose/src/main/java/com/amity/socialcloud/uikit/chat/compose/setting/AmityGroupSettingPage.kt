@@ -70,6 +70,7 @@ import com.amity.socialcloud.uikit.common.ui.theme.AmityColorToken
 import com.amity.socialcloud.uikit.common.utils.AmityConstants
 import com.amity.socialcloud.uikit.common.utils.resolvedAvatarUrl
 
+const val CHAT_CUSTOMIZATION = true
 @Composable
 fun AmityGroupSettingPage(
     modifier: Modifier = Modifier,
@@ -170,10 +171,13 @@ fun AmityGroupSettingPage(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                AmityBanner(
-                    hierarchy = AmityBannerHierarchy.DEFAULT,
-                    header = amityChatString("chat.group.settings.section"),
-                )
+                // APP-14505: "Group settings" header hidden for non-moderators when
+                if (!CHAT_CUSTOMIZATION || isModerator) {
+                    AmityBanner(
+                        hierarchy = AmityBannerHierarchy.DEFAULT,
+                        header = amityChatString("chat.group.settings.section"),
+                    )
+                }
 
                 // Moderator section (moderator only)
                 if (isModerator) {
@@ -243,7 +247,8 @@ fun AmityGroupSettingPage(
                 // All users section
                 Spacer(modifier = Modifier.height(8.dp))
 
-                if (!isModerator) {
+                // APP-14505: "All members" hidden for non-moderators when CHAT_CUSTOMIZATION is on.
+                if (!isModerator && !CHAT_CUSTOMIZATION) {
                     SettingItem(
                         text = amityChatString("chat.group.members.label"),
                         iconResId = CommonComposeR.drawable.amity_ic_user_group_s,
@@ -275,7 +280,12 @@ fun AmityGroupSettingPage(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 SettingItem(
-                    text = amityChatString("chat.group.leave"),
+                    // APP-14505: "Leave Chat" copy instead of stock "Leave group" when CHAT_CUSTOMIZATION is on.
+                    text = if (CHAT_CUSTOMIZATION) {
+                        amityChatString("chat.group.leave.customized")
+                    } else {
+                        amityChatString("chat.group.leave")
+                    },
                     textColor = AmityTheme.token(AmityColorToken.TextListHeaderDestructiveDefault),
                     showArrow = false,
                     onClick = {
@@ -292,8 +302,17 @@ fun AmityGroupSettingPage(
         // Leave confirmation dialog
         if (showLeaveDialog) {
             AmityChatConfirmDialog(
-                title = amityChatString("chat.group.leave.confirm.title"),
-                message = amityChatString("chat.group.leave.confirm.message"),
+                // APP-14505: "Leave Chat" copy instead of stock "Leave group" when CHAT_CUSTOMIZATION is on.
+                title = if (CHAT_CUSTOMIZATION) {
+                    amityChatString("chat.group.leave.confirm.title.customized")
+                } else {
+                    amityChatString("chat.group.leave.confirm.title")
+                },
+                message = if (CHAT_CUSTOMIZATION) {
+                    amityChatString("chat.group.leave.confirm.message.customized")
+                } else {
+                    amityChatString("chat.group.leave.confirm.message")
+                },
                 confirmLabel = amityChatString("chat.group.leave.confirm.label"),
                 onConfirm = {
                     showLeaveDialog = false

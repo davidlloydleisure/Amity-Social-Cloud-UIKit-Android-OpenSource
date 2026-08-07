@@ -112,6 +112,8 @@ import com.amity.socialcloud.uikit.common.utils.resolvedAvatarUrl
 import java.io.File
 import kotlinx.coroutines.delay
 
+const val CHAT_CUSTOMIZATION = true
+
 @Composable
 fun AmityGroupChatMessageComposer(
     modifier: Modifier = Modifier,
@@ -390,7 +392,7 @@ private fun ComposerContent(
         // multi-line, and sit centered against the idle single-line input.
         verticalAlignment = Alignment.Bottom,
     ) {
-        if (editingMessage == null) {
+        if (!CHAT_CUSTOMIZATION && editingMessage == null) {
             AmityButton(
                 modifier = Modifier.padding(end = 12.dp, bottom = 8.dp),
                 variant = AmityButtonVariant.ICON,
