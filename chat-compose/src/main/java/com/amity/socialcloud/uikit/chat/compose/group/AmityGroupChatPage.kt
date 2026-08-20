@@ -1,5 +1,7 @@
 package com.amity.socialcloud.uikit.chat.compose.group
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -16,6 +18,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -25,11 +28,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -42,13 +43,14 @@ import com.amity.socialcloud.uikit.chat.compose.AmityChatBehaviorHelper
 import com.amity.socialcloud.uikit.chat.compose.group.component.AmityGroupChatMessageList
 import com.amity.socialcloud.uikit.chat.compose.group.composer.AmityGroupChatMessageComposer
 import com.amity.socialcloud.uikit.chat.compose.group.composer.GroupMentionSuggestionView
-import com.amity.socialcloud.uikit.chat.compose.live.elements.AmityMessageAvatarView
 import com.amity.socialcloud.uikit.chat.compose.live.elements.AmityAvatarFullScreenDialog
 import com.amity.socialcloud.uikit.chat.compose.live.mention.AmityMentionSuggestion
 import com.amity.socialcloud.uikit.chat.compose.localization.amityChatString
 import com.amity.socialcloud.uikit.chat.compose.message.element.AmityChatHeaderSkeleton
 import com.amity.socialcloud.uikit.chat.compose.message.element.AmityChatWaitingForNetworkRow
-import com.amity.socialcloud.uikit.common.compose.R as CommonR
+import com.amity.socialcloud.uikit.chat.compose.message.element.LocalSentVideoUris
+import com.amity.socialcloud.uikit.chat.compose.setting.AmityGroupSettingPageActivity
+import com.amity.socialcloud.uikit.chat.compose.setting.CHAT_CUSTOMIZATION
 import com.amity.socialcloud.uikit.common.ui.atoms.AmityAvatar
 import com.amity.socialcloud.uikit.common.ui.atoms.AmityAvatarSize
 import com.amity.socialcloud.uikit.common.ui.atoms.AmityAvatarStyle
@@ -58,14 +60,11 @@ import com.amity.socialcloud.uikit.common.ui.atoms.AmityDividerVariant
 import com.amity.socialcloud.uikit.common.ui.atoms.AmityEmptyState
 import com.amity.socialcloud.uikit.common.ui.atoms.AmityEmptyStateVariant
 import com.amity.socialcloud.uikit.common.ui.base.AmityBasePage
-import com.amity.socialcloud.uikit.common.ui.theme.AmityTheme
 import com.amity.socialcloud.uikit.common.ui.theme.AmityColorToken
-import com.amity.socialcloud.uikit.chat.compose.message.element.LocalSentVideoUris
-import androidx.compose.runtime.CompositionLocalProvider
+import com.amity.socialcloud.uikit.common.ui.theme.AmityTheme
 import com.amity.socialcloud.uikit.common.utils.AmityConstants
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlin.collections.any
-import kotlin.text.contains
+import com.amity.socialcloud.uikit.common.compose.R as CommonR
 
 @Composable
 fun AmityGroupChatPage(
@@ -82,6 +81,17 @@ fun AmityGroupChatPage(
 
     val behavior = remember {
         AmityChatBehaviorHelper.groupChatPageBehavior
+    }
+
+    // APP-14864: with CHAT_CUSTOMIZATION on, a RESULT_OK from group settings means the user left
+    // the chat there — close this page too instead of leaving it stranded under the SDK's own home
+    // screen, so the caller (our app's chat list) regains control.
+    val groupSettingLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            (context as? android.app.Activity)?.finish()
+        }
     }
 
     val memberRoles by remember {
@@ -167,7 +177,13 @@ fun AmityGroupChatPage(
                         showAvatarFullScreen = true
                     },
                     onHeaderTap = {
-                        behavior.goToGroupSetting(context, channelId)
+                        if (CHAT_CUSTOMIZATION) {
+                            groupSettingLauncher.launch(
+                                AmityGroupSettingPageActivity.newIntent(context, channelId)
+                            )
+                        } else {
+                            behavior.goToGroupSetting(context, channelId)
+                        }
                     },
                     isBanned = membership?.isBanned() == true,
                 )

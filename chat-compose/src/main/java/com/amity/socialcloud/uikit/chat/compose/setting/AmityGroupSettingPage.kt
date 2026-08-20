@@ -20,36 +20,32 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import com.amity.socialcloud.uikit.chat.compose.localization.amityChatString
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.amity.socialcloud.sdk.api.core.AmityCoreClient
-import com.amity.socialcloud.sdk.model.core.file.AmityImage
 import com.amity.socialcloud.sdk.model.chat.channel.AmityChannel
-import com.amity.socialcloud.sdk.model.chat.channel.AmityChannelNotificationMode
+import com.amity.socialcloud.sdk.model.core.file.AmityImage
 import com.amity.socialcloud.uikit.chat.compose.common.AmityChatConfirmDialog
 import com.amity.socialcloud.uikit.chat.compose.home.AmityChatHomePageActivity
 import com.amity.socialcloud.uikit.chat.compose.home.element.AmityUserAvatarView
-import com.amity.socialcloud.uikit.chat.compose.notification.AmityGroupNotificationPreferencePageActivity
+import com.amity.socialcloud.uikit.chat.compose.localization.amityChatString
 import com.amity.socialcloud.uikit.chat.compose.notification.AmityEditGroupNotificationPageActivity
-import com.amity.socialcloud.uikit.common.compose.R as CommonR
+import com.amity.socialcloud.uikit.chat.compose.notification.AmityGroupNotificationPreferencePageActivity
 import com.amity.socialcloud.uikit.common.eventbus.AmityUIKitSnackbar
 import com.amity.socialcloud.uikit.common.ui.atoms.AmityAvatar
 import com.amity.socialcloud.uikit.common.ui.atoms.AmityAvatarSize
@@ -59,15 +55,16 @@ import com.amity.socialcloud.uikit.common.ui.atoms.AmityBanner
 import com.amity.socialcloud.uikit.common.ui.atoms.AmityBannerHierarchy
 import com.amity.socialcloud.uikit.common.ui.atoms.AmityButton
 import com.amity.socialcloud.uikit.common.ui.atoms.AmityButtonHierarchy
-import com.amity.socialcloud.uikit.common.ui.atoms.AmityButtonVariant
 import com.amity.socialcloud.uikit.common.ui.atoms.AmityButtonStyle
+import com.amity.socialcloud.uikit.common.ui.atoms.AmityButtonVariant
 import com.amity.socialcloud.uikit.common.ui.atoms.AmityDivider
 import com.amity.socialcloud.uikit.common.ui.atoms.AmityDividerVariant
 import com.amity.socialcloud.uikit.common.ui.atoms.AmityIconButtonSize
 import com.amity.socialcloud.uikit.common.ui.base.AmityBasePage
-import com.amity.socialcloud.uikit.common.ui.theme.AmityTheme
 import com.amity.socialcloud.uikit.common.ui.theme.AmityColorToken
+import com.amity.socialcloud.uikit.common.ui.theme.AmityTheme
 import com.amity.socialcloud.uikit.common.utils.AmityConstants
+import com.amity.socialcloud.uikit.common.compose.R as CommonR
 
 const val CHAT_CUSTOMIZATION = true
 @Composable
@@ -317,15 +314,26 @@ fun AmityGroupSettingPage(
                     showLeaveDialog = false
                     viewModel.leaveChannel(
                         onSuccess = {
-                            // Publish before navigating: the snackbar flow is a shared broadcast, so
-                            // the chat list — already in the back stack — receives it and shows the
-                            // toast on the page the user lands on.
-                            AmityUIKitSnackbar.publishSnackbarMessage(message = leftGroupChat)
-                            context.startActivity(
-                                Intent(context, AmityChatHomePageActivity::class.java).apply {
-                                    addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                            // APP-14864: with CHAT_CUSTOMIZATION on, our app has no use for the SDK's
+                            // own AmityChatHomePageActivity — close back into the host app's flow
+                            // instead. RESULT_OK signals AmityGroupChatPage to close itself too, so
+                            // the caller (e.g. ChatsFragment/GroupDetailsFragment) regains control.
+                            if (CHAT_CUSTOMIZATION) {
+                                (context as? Activity)?.apply {
+                                    setResult(Activity.RESULT_OK)
+                                    finish()
                                 }
-                            )
+                            } else {
+                                // Publish before navigating: the snackbar flow is a shared broadcast, so
+                                // the chat list — already in the back stack — receives it and shows the
+                                // toast on the page the user lands on.
+                                AmityUIKitSnackbar.publishSnackbarMessage(message = leftGroupChat)
+                                context.startActivity(
+                                    Intent(context, AmityChatHomePageActivity::class.java).apply {
+                                        addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                                    }
+                                )
+                            }
                         },
                         onError = {
                             AmityUIKitSnackbar.publishSnackbarErrorMessage(errorLeaveGroup)
