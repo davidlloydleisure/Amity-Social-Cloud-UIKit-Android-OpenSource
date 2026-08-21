@@ -41,6 +41,7 @@ import com.amity.socialcloud.sdk.core.session.model.NetworkConnectionEvent
 import com.amity.socialcloud.sdk.model.core.file.AmityImage
 import com.amity.socialcloud.uikit.chat.compose.AmityChatBehaviorHelper
 import com.amity.socialcloud.uikit.chat.compose.group.component.AmityGroupChatMessageList
+import com.amity.socialcloud.uikit.chat.compose.group.component.OneAppGroupChatToolbar
 import com.amity.socialcloud.uikit.chat.compose.group.composer.AmityGroupChatMessageComposer
 import com.amity.socialcloud.uikit.chat.compose.group.composer.GroupMentionSuggestionView
 import com.amity.socialcloud.uikit.chat.compose.live.elements.AmityAvatarFullScreenDialog
@@ -146,7 +147,22 @@ fun AmityGroupChatPage(
             }
             val isHeaderLoading = headerDisplayName.isEmpty() && headerAvatarUrl == null
 
-            if (isHeaderLoading) {
+            // APP-14863: host-app toolbar (back + settings) instead of the stock header, so the chat
+            // matches the rest of the app. Settings opens the same page the stock header opened on
+            // tap. The stock header below is left untouched so upstream changes still merge cleanly.
+            if (ONE_APP_CUSTOMIZATION) {
+                OneAppGroupChatToolbar(
+                    title = headerDisplayName,
+                    isTitleLoading = isHeaderLoading,
+                    isDisconnected = connection is NetworkConnectionEvent.Disconnected,
+                    onBackClick = { (context as? android.app.Activity)?.finish() },
+                    onSettingsClick = {
+                        groupSettingLauncher.launch(
+                            AmityGroupSettingPageActivity.newIntent(context, channelId)
+                        )
+                    },
+                )
+            } else if (isHeaderLoading) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
