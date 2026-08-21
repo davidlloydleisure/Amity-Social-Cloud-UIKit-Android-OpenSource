@@ -89,6 +89,7 @@ import com.amity.socialcloud.uikit.chat.compose.live.elements.AmityMessageAvatar
 import com.amity.socialcloud.uikit.chat.compose.live.mention.AmityMentionSuggestion
 import com.amity.socialcloud.uikit.chat.compose.localization.DefaultAmityChatStringProvider
 import com.amity.socialcloud.uikit.common.compose.R as CommonR
+import com.amity.socialcloud.uikit.common.customization.ONE_APP_CUSTOMIZATION
 import com.amity.socialcloud.uikit.common.eventbus.AmityUIKitSnackbar
 import com.amity.socialcloud.uikit.common.localization.amityCommonString
 import com.amity.socialcloud.uikit.common.ui.atoms.AmityBanner
@@ -110,8 +111,6 @@ import com.amity.socialcloud.uikit.common.ui.theme.AmityColorToken
 import com.amity.socialcloud.uikit.common.utils.clickableWithoutRipple
 import java.io.File
 import kotlinx.coroutines.delay
-
-const val CHAT_CUSTOMIZATION = true
 
 @Composable
 fun AmityGroupChatMessageComposer(
@@ -391,7 +390,7 @@ private fun ComposerContent(
         // multi-line, and sit centered against the idle single-line input.
         verticalAlignment = Alignment.Bottom,
     ) {
-        if (!CHAT_CUSTOMIZATION && editingMessage == null) {
+        if (!ONE_APP_CUSTOMIZATION && editingMessage == null) {
             AmityButton(
                 modifier = Modifier.padding(end = 12.dp, bottom = 8.dp),
                 variant = AmityButtonVariant.ICON,

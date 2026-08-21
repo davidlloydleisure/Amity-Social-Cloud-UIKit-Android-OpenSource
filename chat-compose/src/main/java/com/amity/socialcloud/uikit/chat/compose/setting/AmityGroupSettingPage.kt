@@ -46,6 +46,7 @@ import com.amity.socialcloud.uikit.chat.compose.home.element.AmityUserAvatarView
 import com.amity.socialcloud.uikit.chat.compose.localization.amityChatString
 import com.amity.socialcloud.uikit.chat.compose.notification.AmityEditGroupNotificationPageActivity
 import com.amity.socialcloud.uikit.chat.compose.notification.AmityGroupNotificationPreferencePageActivity
+import com.amity.socialcloud.uikit.common.customization.ONE_APP_CUSTOMIZATION
 import com.amity.socialcloud.uikit.common.eventbus.AmityUIKitSnackbar
 import com.amity.socialcloud.uikit.common.ui.atoms.AmityAvatar
 import com.amity.socialcloud.uikit.common.ui.atoms.AmityAvatarSize
@@ -66,7 +67,6 @@ import com.amity.socialcloud.uikit.common.ui.theme.AmityTheme
 import com.amity.socialcloud.uikit.common.utils.AmityConstants
 import com.amity.socialcloud.uikit.common.compose.R as CommonR
 
-const val CHAT_CUSTOMIZATION = true
 @Composable
 fun AmityGroupSettingPage(
     modifier: Modifier = Modifier,
@@ -168,7 +168,7 @@ fun AmityGroupSettingPage(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 // APP-14505: "Group settings" header hidden for non-moderators when
-                if (!CHAT_CUSTOMIZATION || isModerator) {
+                if (!ONE_APP_CUSTOMIZATION || isModerator) {
                     AmityBanner(
                         hierarchy = AmityBannerHierarchy.DEFAULT,
                         header = amityChatString("chat.group.settings.section"),
@@ -243,8 +243,8 @@ fun AmityGroupSettingPage(
                 // All users section
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // APP-14505: "All members" hidden for non-moderators when CHAT_CUSTOMIZATION is on.
-                if (!isModerator && !CHAT_CUSTOMIZATION) {
+                // APP-14505: "All members" hidden for non-moderators when ONE_APP_CUSTOMIZATION is on.
+                if (!isModerator && !ONE_APP_CUSTOMIZATION) {
                     SettingItem(
                         text = amityChatString("chat.group.members.label"),
                         iconResId = CommonR.drawable.amity_ic_user_group_s,
@@ -276,8 +276,8 @@ fun AmityGroupSettingPage(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 SettingItem(
-                    // APP-14505: "Leave Chat" copy instead of stock "Leave group" when CHAT_CUSTOMIZATION is on.
-                    text = if (CHAT_CUSTOMIZATION) {
+                    // APP-14505: "Leave Chat" copy instead of stock "Leave group" when ONE_APP_CUSTOMIZATION is on.
+                    text = if (ONE_APP_CUSTOMIZATION) {
                         amityChatString("chat.group.leave.customized")
                     } else {
                         amityChatString("chat.group.leave")
@@ -298,13 +298,13 @@ fun AmityGroupSettingPage(
         // Leave confirmation dialog
         if (showLeaveDialog) {
             AmityChatConfirmDialog(
-                // APP-14505: "Leave Chat" copy instead of stock "Leave group" when CHAT_CUSTOMIZATION is on.
-                title = if (CHAT_CUSTOMIZATION) {
+                // APP-14505: "Leave Chat" copy instead of stock "Leave group" when ONE_APP_CUSTOMIZATION is on.
+                title = if (ONE_APP_CUSTOMIZATION) {
                     amityChatString("chat.group.leave.confirm.title.customized")
                 } else {
                     amityChatString("chat.group.leave.confirm.title")
                 },
-                message = if (CHAT_CUSTOMIZATION) {
+                message = if (ONE_APP_CUSTOMIZATION) {
                     amityChatString("chat.group.leave.confirm.message.customized")
                 } else {
                     amityChatString("chat.group.leave.confirm.message")
@@ -314,11 +314,11 @@ fun AmityGroupSettingPage(
                     showLeaveDialog = false
                     viewModel.leaveChannel(
                         onSuccess = {
-                            // APP-14864: with CHAT_CUSTOMIZATION on, our app has no use for the SDK's
+                            // APP-14864: with ONE_APP_CUSTOMIZATION on, our app has no use for the SDK's
                             // own AmityChatHomePageActivity — close back into the host app's flow
                             // instead. RESULT_OK signals AmityGroupChatPage to close itself too, so
                             // the caller (e.g. ChatsFragment/GroupDetailsFragment) regains control.
-                            if (CHAT_CUSTOMIZATION) {
+                            if (ONE_APP_CUSTOMIZATION) {
                                 (context as? Activity)?.apply {
                                     setResult(Activity.RESULT_OK)
                                     finish()

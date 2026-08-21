@@ -50,7 +50,7 @@ import com.amity.socialcloud.uikit.chat.compose.message.element.AmityChatHeaderS
 import com.amity.socialcloud.uikit.chat.compose.message.element.AmityChatWaitingForNetworkRow
 import com.amity.socialcloud.uikit.chat.compose.message.element.LocalSentVideoUris
 import com.amity.socialcloud.uikit.chat.compose.setting.AmityGroupSettingPageActivity
-import com.amity.socialcloud.uikit.chat.compose.setting.CHAT_CUSTOMIZATION
+import com.amity.socialcloud.uikit.common.customization.ONE_APP_CUSTOMIZATION
 import com.amity.socialcloud.uikit.common.ui.atoms.AmityAvatar
 import com.amity.socialcloud.uikit.common.ui.atoms.AmityAvatarSize
 import com.amity.socialcloud.uikit.common.ui.atoms.AmityAvatarStyle
@@ -83,7 +83,7 @@ fun AmityGroupChatPage(
         AmityChatBehaviorHelper.groupChatPageBehavior
     }
 
-    // APP-14864: with CHAT_CUSTOMIZATION on, a RESULT_OK from group settings means the user left
+    // APP-14864: with ONE_APP_CUSTOMIZATION on, a RESULT_OK from group settings means the user left
     // the chat there — close this page too instead of leaving it stranded under the SDK's own home
     // screen, so the caller (our app's chat list) regains control.
     val groupSettingLauncher = rememberLauncherForActivityResult(
@@ -177,7 +177,7 @@ fun AmityGroupChatPage(
                         showAvatarFullScreen = true
                     },
                     onHeaderTap = {
-                        if (CHAT_CUSTOMIZATION) {
+                        if (ONE_APP_CUSTOMIZATION) {
                             groupSettingLauncher.launch(
                                 AmityGroupSettingPageActivity.newIntent(context, channelId)
                             )
