@@ -35,7 +35,6 @@ dependencies {
     api project(path: ':amity:common-compose')
 
     // APP-14863: host-app design system (OneAppToolbar) for the customized group chat toolbar.
-    // Kept as `implementation` so it does not leak transitively into :data / :app via :amity:amity-uikit.
     implementation project(path: ':core:platform')
 
     implementation "androidx.media3:media3-exoplayer:$media3Version"

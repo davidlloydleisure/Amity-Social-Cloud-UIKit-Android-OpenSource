@@ -147,9 +147,7 @@ fun AmityGroupChatPage(
             }
             val isHeaderLoading = headerDisplayName.isEmpty() && headerAvatarUrl == null
 
-            // APP-14863: host-app toolbar (back + settings) instead of the stock header, so the chat
-            // matches the rest of the app. Settings opens the same page the stock header opened on
-            // tap. The stock header below is left untouched so upstream changes still merge cleanly.
+            // APP-14863: host-app toolbar (back + settings + title) instead of the stock header
             if (ONE_APP_CUSTOMIZATION) {
                 OneAppGroupChatToolbar(
                     title = headerDisplayName,

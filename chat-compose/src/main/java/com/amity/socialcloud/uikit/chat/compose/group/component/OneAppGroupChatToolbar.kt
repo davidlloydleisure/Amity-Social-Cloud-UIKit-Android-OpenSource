@@ -30,19 +30,7 @@ private const val TITLE_SHIMMER_WIDTH_FRACTION = 0.7f
 
 /**
  * APP-14863: host-app toolbar for the group chat page, replacing the stock Amity header so the
- * screen matches the rest of the app (see `ChatsScreen`). Back closes the page, the trailing
- * button opens the same group settings the stock header opened on tap.
- *
- * Assembled from the platform toolbar's building blocks rather than `OneAppToolbar` itself, because
- * the channel name arrives asynchronously and the title zone needs a shimmer placeholder until it
- * does — our own equivalent of the stock `AmityChatHeaderSkeleton`. Both states share one code path,
- * so nothing shifts when the name lands.
- *
- * Unlike the stock skeleton branch, which offers back only, the settings button stays available
- * while the title loads: the settings page takes just the channel id and loads its own data.
- *
- * Lives in a file upstream does not have — see [com.amity.socialcloud.uikit.common.customization.ONE_APP_CUSTOMIZATION].
- *
+ * screen matches the rest of the app
  * @param isTitleLoading shows the shimmer placeholder instead of [title]; pass the page's
  * `isHeaderLoading` so the toolbar switches exactly when the stock header would.
  * @param isDisconnected shows the stock "waiting for network" row under the toolbar.
@@ -95,7 +83,7 @@ fun OneAppGroupChatToolbar(
                     AmityChatWaitingForNetworkRow(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 4.dp),
+                            .padding(bottom = OneAppDimensions.Offset4),
                     )
                 }
             }
