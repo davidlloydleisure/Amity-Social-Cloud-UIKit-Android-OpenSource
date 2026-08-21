@@ -8,6 +8,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.ui.Modifier
+import com.amity.socialcloud.uikit.common.customization.ONE_APP_CUSTOMIZATION
 
 class AmityGroupChatPageActivity : AppCompatActivity() {
 
@@ -20,8 +21,9 @@ class AmityGroupChatPageActivity : AppCompatActivity() {
 
         setContent {
             AmityGroupChatPage(
-                modifier = Modifier
-                    .statusBarsPadding(),
+                // APP-14863: OneAppToolbar applies the status bar inset itself, so padding here
+                // would double it.
+                modifier = if (ONE_APP_CUSTOMIZATION) Modifier else Modifier.statusBarsPadding(),
                 channelId = channelId,
                 jumpToMessageId = jumpToMessageId,
             )

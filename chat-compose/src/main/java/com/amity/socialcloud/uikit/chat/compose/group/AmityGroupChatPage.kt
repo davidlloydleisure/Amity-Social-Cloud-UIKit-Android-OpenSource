@@ -41,6 +41,7 @@ import com.amity.socialcloud.sdk.core.session.model.NetworkConnectionEvent
 import com.amity.socialcloud.sdk.model.core.file.AmityImage
 import com.amity.socialcloud.uikit.chat.compose.AmityChatBehaviorHelper
 import com.amity.socialcloud.uikit.chat.compose.group.component.AmityGroupChatMessageList
+import com.amity.socialcloud.uikit.chat.compose.group.component.OneAppGroupChatToolbar
 import com.amity.socialcloud.uikit.chat.compose.group.composer.AmityGroupChatMessageComposer
 import com.amity.socialcloud.uikit.chat.compose.group.composer.GroupMentionSuggestionView
 import com.amity.socialcloud.uikit.chat.compose.live.elements.AmityAvatarFullScreenDialog
@@ -50,7 +51,7 @@ import com.amity.socialcloud.uikit.chat.compose.message.element.AmityChatHeaderS
 import com.amity.socialcloud.uikit.chat.compose.message.element.AmityChatWaitingForNetworkRow
 import com.amity.socialcloud.uikit.chat.compose.message.element.LocalSentVideoUris
 import com.amity.socialcloud.uikit.chat.compose.setting.AmityGroupSettingPageActivity
-import com.amity.socialcloud.uikit.chat.compose.setting.CHAT_CUSTOMIZATION
+import com.amity.socialcloud.uikit.common.customization.ONE_APP_CUSTOMIZATION
 import com.amity.socialcloud.uikit.common.ui.atoms.AmityAvatar
 import com.amity.socialcloud.uikit.common.ui.atoms.AmityAvatarSize
 import com.amity.socialcloud.uikit.common.ui.atoms.AmityAvatarStyle
@@ -83,7 +84,7 @@ fun AmityGroupChatPage(
         AmityChatBehaviorHelper.groupChatPageBehavior
     }
 
-    // APP-14864: with CHAT_CUSTOMIZATION on, a RESULT_OK from group settings means the user left
+    // APP-14864: with ONE_APP_CUSTOMIZATION on, a RESULT_OK from group settings means the user left
     // the chat there — close this page too instead of leaving it stranded under the SDK's own home
     // screen, so the caller (our app's chat list) regains control.
     val groupSettingLauncher = rememberLauncherForActivityResult(
@@ -146,7 +147,20 @@ fun AmityGroupChatPage(
             }
             val isHeaderLoading = headerDisplayName.isEmpty() && headerAvatarUrl == null
 
-            if (isHeaderLoading) {
+            // APP-14863: host-app toolbar (back + settings + title) instead of the stock header
+            if (ONE_APP_CUSTOMIZATION) {
+                OneAppGroupChatToolbar(
+                    title = headerDisplayName,
+                    isTitleLoading = isHeaderLoading,
+                    isDisconnected = connection is NetworkConnectionEvent.Disconnected,
+                    onBackClick = { (context as? android.app.Activity)?.finish() },
+                    onSettingsClick = {
+                        groupSettingLauncher.launch(
+                            AmityGroupSettingPageActivity.newIntent(context, channelId)
+                        )
+                    },
+                )
+            } else if (isHeaderLoading) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -177,7 +191,7 @@ fun AmityGroupChatPage(
                         showAvatarFullScreen = true
                     },
                     onHeaderTap = {
-                        if (CHAT_CUSTOMIZATION) {
+                        if (ONE_APP_CUSTOMIZATION) {
                             groupSettingLauncher.launch(
                                 AmityGroupSettingPageActivity.newIntent(context, channelId)
                             )
