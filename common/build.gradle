@@ -1,8 +1,10 @@
 plugins {
     id 'com.android.library'
-    id 'org.jetbrains.kotlin.android'
+    id 'com.android.built-in-kotlin'
+    // ONE_APP_CUSTOMIZATION APP-14475: data binding processes the @BindingAdapter functions in
+    // this module's Kotlin sources through an annotation processor, so kapt has to stay here.
+    id 'com.android.legacy-kapt'
     id 'kotlin-parcelize'
-    id 'org.jetbrains.kotlin.kapt'
 }
 
 apply from: "../buildsystem/activity.gradle"
@@ -19,9 +21,8 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = '17'
-    }
+    // ONE_APP_CUSTOMIZATION APP-14475: built-in Kotlin has no kotlinOptions on the android
+    // extension; jvmTarget follows compileOptions.targetCompatibility set just above.
 
     packagingOptions {
         pickFirst("META-INF/*.kotlin_module")
