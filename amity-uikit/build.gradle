@@ -8,7 +8,7 @@ plugins {
 apply from: "../buildsystem/activity.gradle"
 
 android {
-    namespace 'com.amity.socialcloud.uikit'
+    namespace = 'com.amity.socialcloud.uikit'
     buildTypes {
         release {
             consumerProguardFiles 'amity-proguard-rules.pro'

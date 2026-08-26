@@ -11,7 +11,7 @@ plugins {
 android {
     compileSdk amityCompileSdkVersion
     buildToolsVersion = "34.0.0"
-    namespace 'com.amity.socialcloud.uikit.sample'
+    namespace = 'com.amity.socialcloud.uikit.sample'
 
     defaultConfig {
         applicationId "com.amity.sample.ascuikit"
@@ -19,7 +19,7 @@ android {
         targetSdkVersion amityTargetSdkVersion
         versionCode 1
         versionName "4.23.2"
-        multiDexEnabled true
+        multiDexEnabled = true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -35,18 +35,18 @@ android {
     buildFeatures {
         dataBinding = true
         viewBinding = true
-        compose true
+        compose = true
     }
 
     buildTypes {
         release {
-            minifyEnabled false
-            shrinkResources false
+            minifyEnabled = false
+            shrinkResources = false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.debug
         }
         debug {
-            minifyEnabled false
+            minifyEnabled = false
         }
     }
 

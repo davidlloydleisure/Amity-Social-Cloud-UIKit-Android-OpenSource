@@ -10,12 +10,12 @@ plugins {
 apply from: "../buildsystem/activity.gradle"
 
 android {
-    namespace 'com.amity.socialcloud.uikit.community.compose'
+    namespace = 'com.amity.socialcloud.uikit.community.compose'
 
     buildFeatures {
-        dataBinding true
-        viewBinding true
-        compose true
+        dataBinding = true
+        viewBinding = true
+        compose = true
     }
 
     packagingOptions {

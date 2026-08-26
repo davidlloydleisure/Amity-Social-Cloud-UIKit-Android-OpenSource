@@ -9,12 +9,12 @@ plugins {
 apply from: "../buildsystem/activity.gradle"
 
 android {
-    namespace 'com.amity.socialcloud.uikit.chat.compose'
+    namespace = 'com.amity.socialcloud.uikit.chat.compose'
 
     buildFeatures {
-        dataBinding true
-        viewBinding true
-        compose true
+        dataBinding = true
+        viewBinding = true
+        compose = true
     }
 
     packagingOptions {

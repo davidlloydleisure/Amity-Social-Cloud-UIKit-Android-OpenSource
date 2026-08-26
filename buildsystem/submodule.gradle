@@ -26,11 +26,11 @@ android {
 
     buildTypes {
         debug {
-            testCoverageEnabled true
+            testCoverageEnabled = true
         }
         release {
-            testCoverageEnabled false
-            minifyEnabled false
+            testCoverageEnabled = false
+            minifyEnabled = false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -49,12 +49,12 @@ android {
     }
 
     lintOptions {
-        quiet true
-        xmlReport false
-        checkDependencies false
-        abortOnError false
-        checkAllWarnings true
-        warningsAsErrors true
+        quiet = true
+        xmlReport = false
+        checkDependencies = false
+        abortOnError = false
+        checkAllWarnings = true
+        warningsAsErrors = true
 
         disable "GoogleAppIndexingWarning"
         disable "NewerVersionAvailable"

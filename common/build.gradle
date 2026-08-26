@@ -8,7 +8,7 @@ plugins {
 apply from: "../buildsystem/activity.gradle"
 
 android {
-    namespace 'com.amity.socialcloud.uikit.common'
+    namespace = 'com.amity.socialcloud.uikit.common'
 
     buildFeatures {
         dataBinding = true
