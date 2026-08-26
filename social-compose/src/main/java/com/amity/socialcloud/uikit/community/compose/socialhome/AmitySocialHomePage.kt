@@ -342,7 +342,15 @@ fun AmitySocialHomePage(
                             AmityNewsFeedComponent(
                                 pageScope = getPageScope(),
                                 onExploreRequested = {
+                                    // PDT-4754: selecting the tab only moves the tab strip. The
+                                    // pager has userScrollEnabled = false, so it stays on Following
+                                    // unless it is scrolled explicitly -- Explore highlighted the
+                                    // Communities tab and went nowhere. Every other tab switch on
+                                    // this page pairs the two; do the same here.
                                     selectedTab = AmitySocialHomePageTab.COMMUNITIES
+                                    scrollScope.launch {
+                                        pagerState.scrollToPage(2)
+                                    }
                                 }
                             )
                         }

@@ -7,8 +7,30 @@ plugins {
 
 apply from: "../buildsystem/activity.gradle"
 
+// The short SHA of the checkout this artifact was built from. Guarded: a consumer building from
+// a source archive, or any tree without git, has no .git to ask -- that must degrade, not fail.
+static def resolveGitCommitHash() {
+    try {
+        def proc = ["git", "rev-parse", "--short=8", "HEAD"].execute(null, new File("."))
+        proc.waitForOrKill(3000)
+        return proc.exitValue() == 0 ? proc.text.trim() : "unknown"
+    } catch (Exception ignored) {
+        return "unknown"
+    }
+}
+
 android {
     namespace 'com.amity.socialcloud.uikit'
+
+    buildFeatures {
+        buildConfig = true
+    }
+
+    defaultConfig {
+        buildConfigField "String", "AMITY_UIKIT_VERSION", "\"${amityUIKitVersion}\""
+        buildConfigField "String", "AMITY_UIKIT_COMMIT_HASH", "\"${resolveGitCommitHash()}\""
+    }
+
     buildTypes {
         release {
             consumerProguardFiles 'amity-proguard-rules.pro'

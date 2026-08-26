@@ -20,6 +20,8 @@ import io.reactivex.rxjava3.core.Completable
 
 object AmityUIKit4Manager {
 
+    private const val BUILD_INFO_TAG = "AmityUIKit"
+
     val behavior = AmityUIKit4Behavior()
 
     fun setup(
@@ -43,6 +45,28 @@ object AmityUIKit4Manager {
         DefaultAmitySocialStringProvider.initialize(AmityAppContext.getContext())
         DefaultAmityChatStringProvider.initialize(AmityAppContext.getContext())
         NetworkConnectionEventPublisher.initPublisher(context = AmityAppContext.getContext())
+        logBuildInfo()
+    }
+
+    /**
+     * One line at startup naming exactly what is running: the UIKit version, the SDK it resolved
+     * against, and the commit the UIKit was built from. A bug report that quotes this identifies
+     * the build without anyone having to guess which branch or artifact produced it.
+     *
+     * The SDK version is read at runtime rather than baked in, so it reports the artifact actually
+     * on the classpath -- which is the point when a composite build or a version override has
+     * replaced the declared one. The commit hash is "unknown" when the artifact was built from a
+     * tree without git.
+     */
+    private fun logBuildInfo() {
+        runCatching {
+            Log.i(
+                BUILD_INFO_TAG,
+                "UIKit ${BuildConfig.AMITY_UIKIT_VERSION} " +
+                        "(${BuildConfig.AMITY_UIKIT_COMMIT_HASH}) | " +
+                        "SDK ${AmityCoreClient.getAmityCoreSdkVersion()}"
+            )
+        }
     }
 
     fun syncNetworkConfig(): Completable {

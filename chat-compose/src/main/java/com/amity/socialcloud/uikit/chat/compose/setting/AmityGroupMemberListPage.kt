@@ -110,7 +110,14 @@ fun AmityGroupMemberListPage(
     channelId: String,
 ) {
     val viewModel = remember { AmityGroupMemberListPageViewModel(channelId) }
-    val isModerator by viewModel.isModerator().collectAsState(initial = false)
+    // One permission per action, matching iOS. A single ADD_CHANNEL_USER check used to gate the
+    // add-member button AND promote/demote/mute/ban/remove, so anyone who could add members could
+    // moderate them, and anyone who could ban but not add could do nothing.
+    val canAddMember by viewModel.canAddMember().collectAsState(initial = false)
+    val canPromote by viewModel.canPromote().collectAsState(initial = false)
+    val canMute by viewModel.canMute().collectAsState(initial = false)
+    val canBan by viewModel.canBan().collectAsState(initial = false)
+    val canRemove by viewModel.canRemove().collectAsState(initial = false)
     val searchKeyword by viewModel.searchKeyword.collectAsState()
     val context = LocalContext.current
 
@@ -188,7 +195,7 @@ fun AmityGroupMemberListPage(
                         .align(Alignment.Center),
                 )
 
-                if (isModerator) {
+                if (canAddMember) {
                     AmityButton(
                         variant = AmityButtonVariant.ICON,
                         style = AmityButtonStyle.GHOST,
@@ -308,7 +315,7 @@ fun AmityGroupMemberListPage(
                                         member = self,
                                         isCurrentUser = true,
                                         showMoreAction = false,
-                                        showMuteIcon = isModerator,
+                                        showMuteIcon = canMute,
                                         onMoreClick = {},
                                     )
                                 }
@@ -322,7 +329,7 @@ fun AmityGroupMemberListPage(
                                 member = member,
                                 isCurrentUser = false,
                                 showMoreAction = member.getUserId() != currentUserId,
-                                showMuteIcon = isModerator,
+                                showMuteIcon = canMute,
                                 onMoreClick = {
                                     selectedMember = member
                                     scope.launch { sheetState.show() }
@@ -364,7 +371,7 @@ fun AmityGroupMemberListPage(
                                         member = self,
                                         isCurrentUser = true,
                                         showMoreAction = false,
-                                        showMuteIcon = isModerator,
+                                        showMuteIcon = canMute,
                                         onMoreClick = {},
                                     )
                                 }
@@ -377,7 +384,7 @@ fun AmityGroupMemberListPage(
                                 member = member,
                                 isCurrentUser = false,
                                 showMoreAction = member.getUserId() != currentUserId,
-                                showMuteIcon = isModerator,
+                                showMuteIcon = canMute,
                                 onMoreClick = {
                                     selectedMember = member
                                     scope.launch { sheetState.show() }
@@ -391,8 +398,7 @@ fun AmityGroupMemberListPage(
 
         // Action bottom sheet
         if (selectedMember != null) {
-            AmitySheet(
-                onDismissRequest = {
+            AmitySheet(onDismissRequest = {
                     selectedMember = null
                 },
                 sheetState = sheetState,
@@ -406,7 +412,7 @@ fun AmityGroupMemberListPage(
                         .fillMaxWidth()
                         .padding(bottom = 32.dp),
                 ) {
-                    if (isModerator) {
+                    if (canPromote) {
                         // Promote / Demote
                         if (isMemberModerator) {
                             MemberActionItem(
@@ -429,25 +435,25 @@ fun AmityGroupMemberListPage(
                                 },
                             )
                         }
+                    }
 
-                        // Mute / Unmute (only for non-moderator members)
-                        if (!isMemberModerator) {
-                            val isMuted = member.isMuted()
-                            MemberActionItem(
-                                text = amityChatString(
-                                    if (isMuted) "chat.group.member.action.unmute"
-                                    else "chat.group.member.action.mute"
-                                ),
-                                iconResId = if (isMuted) CommonR.drawable.amity_ic_volume_r
-                                else CommonR.drawable.amity_ic_volume_slash_r,
-                                onClick = {
-                                    pendingMuteUserId = member.getUserId()
-                                    pendingMuteIsMuted = isMuted
-                                    selectedMember = null
-                                    showMuteConfirmDialog = true
-                                },
-                            )
-                        }
+                    // Mute / Unmute (only for non-moderator members)
+                    if (canMute && !isMemberModerator) {
+                        val isMuted = member.isMuted()
+                        MemberActionItem(
+                            text = amityChatString(
+                                if (isMuted) "chat.group.member.action.unmute"
+                                else "chat.group.member.action.mute"
+                            ),
+                            iconResId = if (isMuted) CommonR.drawable.amity_ic_volume_r
+                            else CommonR.drawable.amity_ic_volume_slash_r,
+                            onClick = {
+                                pendingMuteUserId = member.getUserId()
+                                pendingMuteIsMuted = isMuted
+                                selectedMember = null
+                                showMuteConfirmDialog = true
+                            },
+                        )
                     }
 
                     // Report / Unreport
@@ -488,9 +494,8 @@ fun AmityGroupMemberListPage(
                         },
                     )
 
-                    if (isModerator) {
-
-                        // Ban
+                    // Ban
+                    if (canBan) {
                         MemberActionItem(
                             text = amityChatString("chat.user.action.ban"),
                             iconResId = CommonR.drawable.amity_ic_ban_r,
@@ -500,8 +505,10 @@ fun AmityGroupMemberListPage(
                                 showBanConfirmDialog = true
                             },
                         )
+                    }
 
-                        // Remove (destructive)
+                    // Remove (destructive)
+                    if (canRemove) {
                         MemberActionItem(
                             text = amityChatString("chat.member.action.remove"),
                             iconResId = CommonR.drawable.amity_ic_trash_r,
