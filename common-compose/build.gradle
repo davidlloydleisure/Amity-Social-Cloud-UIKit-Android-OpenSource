@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace 'com.amity.socialcloud.uikit.common.compose'
+    namespace = 'com.amity.socialcloud.uikit.common.compose'
     //compileSdk amityCompileSdkVersion
 
     defaultConfig {
@@ -17,12 +17,12 @@ android {
         consumerProguardFiles "consumer-rules.pro"
     }
     buildFeatures {
-        compose true
+        compose = true
     }
 
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled = false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }

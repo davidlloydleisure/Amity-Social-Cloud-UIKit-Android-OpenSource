@@ -20,7 +20,7 @@ static def resolveGitCommitHash() {
 }
 
 android {
-    namespace 'com.amity.socialcloud.uikit'
+    namespace = 'com.amity.socialcloud.uikit'
 
     buildFeatures {
         buildConfig = true
