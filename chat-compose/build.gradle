@@ -16,10 +16,10 @@ android {
         compose = true
     }
 
-    packagingOptions {
-        pickFirst("META-INF/*.kotlin_module")
-        exclude 'META-INF/INDEX.LIST'
-        exclude 'META-INF/io.netty.versions.properties'
+    packaging {
+        resources.pickFirsts += "META-INF/*.kotlin_module"
+        resources.excludes += 'META-INF/INDEX.LIST'
+        resources.excludes += 'META-INF/io.netty.versions.properties'
     }
 }
 

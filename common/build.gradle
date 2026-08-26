@@ -24,10 +24,10 @@ android {
     // ONE_APP_CUSTOMIZATION APP-14475: built-in Kotlin has no kotlinOptions on the android
     // extension; jvmTarget follows compileOptions.targetCompatibility set just above.
 
-    packagingOptions {
-        pickFirst("META-INF/*.kotlin_module")
-        exclude 'META-INF/INDEX.LIST'
-        exclude 'META-INF/io.netty.versions.properties'
+    packaging {
+        resources.pickFirsts += "META-INF/*.kotlin_module"
+        resources.excludes += 'META-INF/INDEX.LIST'
+        resources.excludes += 'META-INF/io.netty.versions.properties'
     }
 }
 
