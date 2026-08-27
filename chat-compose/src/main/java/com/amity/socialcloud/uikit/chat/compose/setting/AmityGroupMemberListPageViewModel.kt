@@ -46,10 +46,16 @@ class AmityGroupMemberListPageViewModel(
     /** Gates promote and demote: both edit a member's channel role. */
     fun canPromote(): Flow<Boolean> = hasChannelPermission(AmityPermission.EDIT_CHANNEL_USER)
 
-    /** Gates mute and unmute, and whether the muted indicator is worth showing. */
-    fun canMute(): Flow<Boolean> = hasChannelPermission(AmityPermission.MUTE_CHANNEL_USER)
+    /**
+     * Gates mute and unmute, and whether the muted indicator is worth showing.
+     *
+     * MUTE_USER_INSIDE_CHANNEL, not MUTE_CHANNEL_USER: the latter is the older name and is not
+     * what a channel role actually carries, so the check never matched and mute never appeared.
+     */
+    fun canMute(): Flow<Boolean> = hasChannelPermission(AmityPermission.MUTE_USER_INSIDE_CHANNEL)
 
-    fun canBan(): Flow<Boolean> = hasChannelPermission(AmityPermission.BAN_CHANNEL_USER)
+    /** BAN_USER_FROM_CHANNEL, not BAN_CHANNEL_USER -- same reason as [canMute]. */
+    fun canBan(): Flow<Boolean> = hasChannelPermission(AmityPermission.BAN_USER_FROM_CHANNEL)
 
     fun canRemove(): Flow<Boolean> = hasChannelPermission(AmityPermission.REMOVE_CHANNEL_USER)
 
