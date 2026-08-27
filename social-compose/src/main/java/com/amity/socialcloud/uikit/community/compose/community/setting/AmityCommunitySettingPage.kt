@@ -53,6 +53,7 @@ import com.amity.socialcloud.uikit.common.utils.closePageWithResult
 import com.amity.socialcloud.uikit.common.utils.getText
 import com.amity.socialcloud.uikit.common.utils.isCommentNotificationEnabled
 import com.amity.socialcloud.uikit.common.utils.isPostNotificationEnabled
+import com.amity.socialcloud.uikit.common.utils.isSocialNetworkEnabled
 import com.amity.socialcloud.uikit.common.utils.isSocialNotificationEnabled
 import com.amity.socialcloud.uikit.common.utils.isStoryNotificationEnabled
 import com.amity.socialcloud.uikit.community.compose.AmitySocialBehaviorHelper
@@ -434,68 +435,79 @@ fun AmityCommunitySettingPage(
                         communityNotificationSettings?.isCommentNotificationEnabled() == true ||
                         communityNotificationSettings?.isStoryNotificationEnabled() == true)
 
-            HorizontalDivider(
-                color = AmityTheme.colors.divider,
-                modifier = modifier.padding(top = 4.dp, bottom = 8.dp)
-            )
-            Text(
-                text = amitySocialString("amity_social_label_community_your_preferences_title"),
-                style = AmityTheme.typography.titleLegacy,
-                modifier = modifier.padding(vertical = 12.dp)
-            )
+            // Matches iOS AmityCommunitySettingPageViewModel.setupData():
+            //   shouldShowNotifications = isSocialUserNotificationEnabled && isSocialNetworkEnabled
+            // iOS wraps the divider, the section title and the row together, so all three go
+            // when either the user has social notifications off or the network has the module off.
+            val shouldShowNotifications =
+                userNotificationSettings?.isSocialNotificationEnabled() == true &&
+                        communityNotificationSettings?.isSocialNetworkEnabled() == true
 
-            Box(modifier = modifier.fillMaxWidth()) {
-                AmityBaseElement(
-                    pageScope = getPageScope(),
-                    elementId = "notifications"
-                ) {
-                    AmityCommunitySettingItem(
-                        modifier = modifier.testTag(getAccessibilityId()),
-                        title = amitySocialConfigString("amity_social_notification_title_notifications"),
-                        icon = {
-                            Box(
-                                modifier = modifier
-                                    .size(28.dp)
-                                    .background(
-                                        color = AmityTheme.colors.baseShade4,
-                                        shape = RoundedCornerShape(4.dp)
-                                    )
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.amity_ic_community_notifications),
-                                    contentDescription = "",
-                                    tint = AmityTheme.colors.base,
-                                    modifier = modifier.align(Alignment.Center)
-                                )
-                            }
-                        }
-                    ) {
-                        behavior.goToNotificationPage(
-                            AmityCommunitySettingPageBehavior.Context(
-                                pageContext = context,
-                                activityLauncher = launcher,
-                                community = communityVM,
-                            )
-                        )
-                    }
-                }
-
+            if (shouldShowNotifications) {
+                HorizontalDivider(
+                    color = AmityTheme.colors.divider,
+                    modifier = modifier.padding(top = 4.dp, bottom = 8.dp)
+                )
                 Text(
-                    text = if (isNotificationEnabled) amitySocialString("amity_social_button_on") else amitySocialString("amity_social_button_off"),
-                    style = AmityTheme.typography.bodyLegacy.copy(
-                        color = AmityTheme.colors.baseShade1,
-                    ),
-                    modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .offset((-18).dp, (-4).dp)
+                    text = amitySocialString("amity_social_label_community_your_preferences_title"),
+                    style = AmityTheme.typography.titleLegacy,
+                    modifier = modifier.padding(vertical = 12.dp)
                 )
 
+                Box(modifier = modifier.fillMaxWidth()) {
+                    AmityBaseElement(
+                        pageScope = getPageScope(),
+                        elementId = "notifications"
+                    ) {
+                        AmityCommunitySettingItem(
+                            modifier = modifier.testTag(getAccessibilityId()),
+                            title = amitySocialConfigString("amity_social_notification_title_notifications"),
+                            icon = {
+                                Box(
+                                    modifier = modifier
+                                        .size(28.dp)
+                                        .background(
+                                            color = AmityTheme.colors.baseShade4,
+                                            shape = RoundedCornerShape(4.dp)
+                                        )
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.amity_ic_community_notifications),
+                                        contentDescription = "",
+                                        tint = AmityTheme.colors.base,
+                                        modifier = modifier.align(Alignment.Center)
+                                    )
+                                }
+                            }
+                        ) {
+                            behavior.goToNotificationPage(
+                                AmityCommunitySettingPageBehavior.Context(
+                                    pageContext = context,
+                                    activityLauncher = launcher,
+                                    community = communityVM,
+                                )
+                            )
+                        }
+                    }
+
+                    Text(
+                        text = if (isNotificationEnabled) amitySocialString("amity_social_button_on") else amitySocialString("amity_social_button_off"),
+                        style = AmityTheme.typography.bodyLegacy.copy(
+                            color = AmityTheme.colors.baseShade1,
+                        ),
+                        modifier = Modifier
+                            .align(Alignment.CenterEnd)
+                            .offset((-18).dp, (-4).dp)
+                    )
+
+                }
+
+                HorizontalDivider(
+                    color = AmityTheme.colors.divider,
+                    modifier = modifier.padding(top = 4.dp, bottom = 4.dp),
+                )
             }
 
-            HorizontalDivider(
-                color = AmityTheme.colors.divider,
-                modifier = modifier.padding(top = 4.dp, bottom = 4.dp),
-            )
             if(communityVM?.isJoined() == true) {
                 AmityBaseElement(
                     pageScope = getPageScope(),

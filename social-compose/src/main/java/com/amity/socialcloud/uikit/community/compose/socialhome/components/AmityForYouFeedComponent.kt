@@ -18,9 +18,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,6 +38,11 @@ import com.amity.socialcloud.uikit.common.ui.scope.AmityComposePageScope
 import com.amity.socialcloud.uikit.community.compose.AmitySocialBehaviorHelper
 import com.amity.socialcloud.uikit.community.compose.paging.feed.global.amityForYouFeedLLS
 import com.amity.socialcloud.uikit.community.compose.paging.feed.global.amityGlobalPinnedFeedLLS
+import com.amity.socialcloud.uikit.community.compose.post.composer.AmityPostComposerHelper
+import com.amity.socialcloud.uikit.community.compose.paging.feed.global.pinnedPostIds
+import com.amity.socialcloud.uikit.community.compose.paging.feed.global.postIds
+import com.amity.socialcloud.uikit.community.compose.paging.feed.global.renderableFeedItemCount
+import com.amity.socialcloud.uikit.community.compose.paging.feed.global.renderablePinnedPosts
 import com.amity.socialcloud.uikit.community.compose.post.detail.AmityPostCategory
 import com.amity.socialcloud.uikit.community.compose.post.detail.components.AmityPostContentComponent
 import com.amity.socialcloud.uikit.community.compose.post.detail.components.AmityPostContentComponentStyle
@@ -50,6 +54,7 @@ import com.amity.socialcloud.uikit.community.compose.story.target.global.AmitySt
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.launch
 
 /**
  * For You Feed content component — sibling to [AmityNewsFeedComponent].
@@ -89,7 +94,9 @@ fun AmityForYouFeedComponent(
 
     // REQ-005: flow collected once; SDK cursor never dropped on pull-to-refresh.
     val posts = remember { viewModel.getForYouFeed() }.collectAsLazyPagingItems()
-    val pinnedPosts = remember { viewModel.getGlobalPinnedPosts() }.collectAsState(emptyList())
+    val pinnedPosts = viewModel.globalPinnedPosts.collectAsState()
+    val pinnedPostsState by viewModel.globalPinnedPostsState.collectAsState()
+    val scope = rememberCoroutineScope()
 
     val isRefreshing by viewModel.isGlobalFeedRefreshing.collectAsState()
     val isStoryTabVisible by viewModel.isStoryTabVisible.collectAsState()
@@ -100,18 +107,28 @@ fun AmityForYouFeedComponent(
         appendLoadState is LoadState.NotLoading &&
             appendLoadState.endOfPaginationReached  // REQ-015
 
-    // Grace period so shimmer stays visible while pinnedPosts loads.
-    // isFeedExhausted can resolve from cache instantly, but the pinned-
-    // posts query is separate and arrives later.  Without this guard the
-    // caught-up cell flashes alone before the pinned section appears.
-    var initialLoadReady by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
-        delay(1000)
-        initialLoadReady = true
-    }
-
-    val hasVisibleContent = posts.itemCount > 0 || pinnedPosts.value.isNotEmpty()
-    val isLoadingFirstPage = !hasVisibleContent && (!isFeedExhausted || !initialLoadReady)
+    // Renderable content only, and locally created posts count too — a just-created post on an
+    // otherwise empty feed must end the first-page shimmer instead of hiding behind it.
+    val visiblePinnedPosts = pinnedPosts.value.renderablePinnedPosts()
+    val visibleCreatedPosts = AmityPostComposerHelper.getCreatedPosts()
+    val renderableItemCount = posts.itemSnapshotList.items.renderableFeedItemCount(
+        // Same as AmityNewsFeedComponent: amityForYouFeedLLS de-dups on EVERY pinned id.
+        pinnedPostIds = pinnedPosts.value.pinnedPostIds(),
+        createdPostIds = visibleCreatedPosts.postIds(),
+    ) + visiblePinnedPosts.size + visibleCreatedPosts.size
+    val hasVisibleContent = renderableItemCount > 0
+    val isLoadingFirstPage = !hasVisibleContent &&
+        (refreshLoadState is LoadState.Loading ||
+            !isFeedExhausted ||
+            pinnedPostsState.contentState ==
+            AmitySocialHomePageViewModel.AuxiliaryContentState.LOADING)
+    val canShowCaughtUp = isFeedExhausted &&
+        pinnedPostsState !is AmitySocialHomePageViewModel.GlobalPinnedPostsState.Loading
+    val isPinnedRefresh =
+        (pinnedPostsState as? AmitySocialHomePageViewModel.GlobalPinnedPostsState.Loading)
+            ?.isRefresh == true
+    val isPullRefreshing = isLoadingFirstPage || isPinnedRefresh
+    RequestNextRenderableFeedPage(posts, renderableItemCount)
 
     // REQ-023: surface AmityForYouFeedDisabledError to the parent page.
     LaunchedEffect(refreshLoadState) {
@@ -201,9 +218,10 @@ fun AmityForYouFeedComponent(
         }
     }
 
-    // REQ-005: pull-to-refresh does NOT refetch. PullToRefreshBox renders the
-    // animation; onRefresh is a deliberate no-op so the cursor persists.
-    val onRefresh: () -> Unit = { /* intentional no-op — REQ-005 */ }
+    // REQ-005: keep the ranked cursor, but refresh the independent pinned source.
+    val onRefresh: () -> Unit = {
+        scope.launch { viewModel.refreshGlobalPinnedPosts() }
+    }
 
     AmityBaseComponent(
         pageScope = pageScope,
@@ -214,11 +232,11 @@ fun AmityForYouFeedComponent(
             // to the box, so the box drove its own separate state and the indicator never
             // tracked the drag -- the pull read as doing nothing.
             state = pullRefreshState,
-            isRefreshing = isLoadingFirstPage,
+            isRefreshing = isPullRefreshing,
             onRefresh = onRefresh,
             indicator = {
                 PullToRefreshDefaults.Indicator(
-                    isRefreshing = isLoadingFirstPage,
+                    isRefreshing = isPullRefreshing,
                     state = pullRefreshState,
                     modifier = Modifier.align(Alignment.TopCenter),
                 )
@@ -329,7 +347,7 @@ fun AmityForYouFeedComponent(
                     }
 
                     // REQ-015 / REQ-017 / REQ-018: caught-up cell at end of pagination.
-                    if (isFeedExhausted) {
+                    if (canShowCaughtUp) {
                         item(key = "feed_caught_up") {
                             AmityFeedCaughtUpComponent(
                                 modifier = modifier,

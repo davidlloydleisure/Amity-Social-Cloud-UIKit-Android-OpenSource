@@ -233,7 +233,7 @@ fun AmityRecommendedCommunityAvatarView(
                             bottomEnd = 0.dp
                         )
                     )
-                    .background(AmityTheme.colors.primaryShade1)
+                    .background(AmityTheme.colors.baseShade3)
             ) {
                 Icon(
                     painter = painterResource(id = placeholder),

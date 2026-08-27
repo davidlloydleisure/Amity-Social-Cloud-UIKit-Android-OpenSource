@@ -39,6 +39,25 @@ fun AmityUserNotificationSettings.isSocialNotificationEnabled(): Boolean {
         ?.firstOrNull()?.isEnabled() ?: false
 }
 
+/**
+ * Whether the network has the SOCIAL notification module switched on.
+ *
+ * Android's stand-in for what iOS reads as
+ * AmityCommunityNotificationSettings.isSocialNetworkEnabled. The Android SDK does not surface that
+ * flag on the settings object, but it carries the same information per event: the backend sets
+ * isNetworkEnabled from the network-level module switch.
+ *
+ * Folded over the three social categories rather than every event, because the event list also
+ * carries LIVESTREAM_START ("video-streaming.didStart"), which belongs to the VIDEO_STREAMING
+ * module, not SOCIAL. Counting it would report the social module enabled on a network that has
+ * only video streaming on, and would show a Notifications row whose page has nothing to configure.
+ */
+fun AmityCommunityNotificationSettings.isSocialNetworkEnabled(): Boolean {
+    return this.isPostNotificationEnabled() ||
+            this.isCommentNotificationEnabled() ||
+            this.isStoryNotificationEnabled()
+}
+
 fun AmityCommunityNotificationSettings.getPostNotificationSettings(): List<AmityCommunityNotificationEvent> {
     return this.getNotificationEvents().filter {
         it is AmityCommunityNotificationEvent.POST_CREATED ||

@@ -26,9 +26,7 @@ import androidx.compose.ui.layout.LocalPinnableContainer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.amity.socialcloud.uikit.common.ad.AmityListItem
 import com.amity.socialcloud.uikit.common.ui.base.AmityBaseComponent
 import com.amity.socialcloud.uikit.common.ui.elements.AmityNewsFeedDivider
 import com.amity.socialcloud.uikit.common.ui.scope.AmityComposePageScope
@@ -36,6 +34,10 @@ import com.amity.socialcloud.uikit.community.compose.AmitySocialBehaviorHelper
 import com.amity.socialcloud.uikit.community.compose.paging.feed.global.amityGlobalFeedLLS
 import com.amity.socialcloud.uikit.community.compose.paging.feed.global.amityGlobalPinnedFeedLLS
 import com.amity.socialcloud.uikit.community.compose.post.composer.AmityPostComposerHelper
+import com.amity.socialcloud.uikit.community.compose.paging.feed.global.pinnedPostIds
+import com.amity.socialcloud.uikit.community.compose.paging.feed.global.postIds
+import com.amity.socialcloud.uikit.community.compose.paging.feed.global.renderableFeedItemCount
+import com.amity.socialcloud.uikit.community.compose.paging.feed.global.renderablePinnedPosts
 import com.amity.socialcloud.uikit.community.compose.post.detail.AmityPostCategory
 import com.amity.socialcloud.uikit.community.compose.post.detail.components.AmityPostShimmer
 import com.amity.socialcloud.uikit.community.compose.socialhome.AmitySocialHomePageViewModel
@@ -60,12 +62,45 @@ fun AmityNewsFeedComponent(
 
     val viewModel = viewModel<AmitySocialHomePageViewModel>()
     val posts = remember { viewModel.getGlobalFeed() }.collectAsLazyPagingItems()
-    val pinnedPosts = remember {
-        viewModel.getGlobalPinnedPosts()
-    }.collectAsState(emptyList())
+    val pinnedPosts = viewModel.globalPinnedPosts.collectAsState()
+    val pinnedPostsState by viewModel.globalPinnedPostsState.collectAsState()
 
     val lazyListState = rememberLazyListState()
-    val postListState by viewModel.postListState.collectAsState()
+    // Renderable content across every source this feed shows. The empty state must reflect what
+    // the user can actually SEE, so each source is filtered by the one shared predicate before
+    // being counted — a source holding only unsupported or deleted posts contributes nothing.
+    val visiblePinnedPosts = if (AmityFeedAuxiliarySources.FOLLOWING_SHOWS_PINNED_POSTS) {
+        pinnedPosts.value.renderablePinnedPosts()
+    } else {
+        emptyList()
+    }
+    val visibleCreatedPosts = if (AmityFeedAuxiliarySources.FOLLOWING_SHOWS_CREATED_POSTS) {
+        AmityPostComposerHelper.getCreatedPosts()
+    } else {
+        emptyList()
+    }
+    val renderableItemCount = posts.itemSnapshotList.items.renderableFeedItemCount(
+        // The set amityGlobalFeedLLS de-dups against, exactly: EVERY pinned id, not only the
+        // renderable ones. A pinned entry whose post payload has not loaded still carries a
+        // postId and still suppresses that paginated row, so counting it here keeps a row the
+        // renderer drops.
+        pinnedPostIds = pinnedPosts.value.pinnedPostIds(),
+        createdPostIds = visibleCreatedPosts.postIds(),
+    ) + visiblePinnedPosts.size + visibleCreatedPosts.size
+
+    // Only ask the paginated load state when NOTHING renderable exists; otherwise the feed has
+    // content and is a success regardless of what the paginated source alone would say.
+    val postListState = derivePostListState(
+        refreshLoadState = posts.loadState.refresh,
+        appendLoadState = posts.loadState.append,
+        renderableItemCount = renderableItemCount,
+        auxiliaryContentState = if (AmityFeedAuxiliarySources.FOLLOWING_SHOWS_PINNED_POSTS) {
+            pinnedPostsState.contentState
+        } else {
+            AmitySocialHomePageViewModel.AuxiliaryContentState.READY
+        },
+    )
+    RequestNextRenderableFeedPage(posts, renderableItemCount)
 
     val isRefreshing by viewModel.isGlobalFeedRefreshing.collectAsState()
     val isPullRefreshIndicatorVisible by viewModel.isPullRefreshIndicatorVisible.collectAsState()
@@ -79,12 +114,16 @@ fun AmityNewsFeedComponent(
         scope.launch {
             viewModel.refreshGlobalPinnedPosts()
         }
-        AmityPostComposerHelper.clear()
+        viewModel.clearCreatedPostsForRefresh()
     }
 
 
     LaunchedEffect(Unit) {
         viewModel.setGlobalFeedRefreshing(showIndicator = false)
+    }
+
+    LaunchedEffect(postListState) {
+        viewModel.setPostListState(postListState)
     }
 
     LaunchedEffect(isStoryTabVisible) {
@@ -122,11 +161,6 @@ fun AmityNewsFeedComponent(
                 state = lazyListState,
                 modifier = modifier.fillMaxSize()
             ) {
-                AmitySocialHomePageViewModel.PostListState.from(
-                    loadState = posts.loadState.refresh,
-                    itemCount = posts.itemCount,
-                ).let(viewModel::setPostListState)
-
                 item(key = "dummy_story_tab") {
                     LocalPinnableContainer.current?.pin()
                     if (isRefreshing) {
@@ -178,7 +212,7 @@ fun AmityNewsFeedComponent(
                         AmityNewsFeedDivider()
                     }
                 } else {
-                    if (posts.itemCount > 0) {
+                    if (visiblePinnedPosts.isNotEmpty()) {
                         amityGlobalPinnedFeedLLS(
                             modifier = modifier,
                             pageScope = pageScope,

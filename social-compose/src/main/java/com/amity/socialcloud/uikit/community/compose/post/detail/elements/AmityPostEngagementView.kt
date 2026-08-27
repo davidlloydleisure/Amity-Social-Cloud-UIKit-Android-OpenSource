@@ -56,7 +56,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.amity.socialcloud.sdk.api.core.AmityCoreClient
 import com.amity.socialcloud.sdk.model.core.reaction.AmityReactionReferenceType
 import com.amity.socialcloud.sdk.model.social.post.AmityPost
+import com.amity.socialcloud.uikit.common.common.isNotEmptyOrBlank
 import com.amity.socialcloud.uikit.common.common.readableNumber
+import com.amity.socialcloud.uikit.common.config.AmityUIKitConfigController
 import com.amity.socialcloud.uikit.common.localization.amitySocialReactionDisplayName
 import com.amity.socialcloud.uikit.common.model.AmitySocialReactions
 import com.amity.socialcloud.uikit.common.reaction.AmityReactionList
@@ -96,6 +98,14 @@ fun AmityPostEngagementView(
     val behavior = remember {
         AmitySocialBehaviorHelper.postContentComponentBehavior
     }
+
+    val hasShareablePostLink = AmityUIKitConfigController.getPostLink(post).isNotEmptyOrBlank()
+    val isShareablePostTarget = if (post.getTarget() is AmityPost.Target.COMMUNITY) {
+        (post.getTarget() as AmityPost.Target.COMMUNITY).getCommunity()?.isPublic() == true
+    } else {
+        true
+    }
+    val shouldShowShareButton = hasShareablePostLink && isShareablePostTarget
 
     val myReactionState = remember {
         val firstReaction = post.getMyReactions().firstOrNull()
@@ -508,21 +518,7 @@ fun AmityPostEngagementView(
 
                 Spacer(Modifier.weight(1f))
 
-                if (post.getTarget() is AmityPost.Target.COMMUNITY) {
-                    val community = (post.getTarget() as AmityPost.Target.COMMUNITY).getCommunity()
-                    if (community?.isPublic() == true) {
-                        Icon(
-                            imageVector = ImageVector.vectorResource(id = R.drawable.amity_v4_share_icon),
-                            contentDescription = "Post Comment Count",
-                            tint = Color.Unspecified,
-                            modifier = Modifier
-                                .size(20.dp)
-                                .clickableWithoutRipple {
-                                    shareButtonClick(post.getPostId())
-                                }
-                        )
-                    }
-                } else {
+                if (shouldShowShareButton) {
                     Icon(
                         imageVector = ImageVector.vectorResource(id = R.drawable.amity_v4_share_icon),
                         contentDescription = "Post Comment Count",

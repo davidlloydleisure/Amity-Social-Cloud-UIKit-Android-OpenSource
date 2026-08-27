@@ -29,7 +29,9 @@ fun LazyListScope.amityGlobalFeedLLS(
     onCreateCommunityClicked: () -> Unit,
     onExploreCommunityClicked: () -> Unit,
 ) {
-    val createdPosts = AmityPostComposerHelper.getCreatedPosts();
+    val createdPosts = AmityPostComposerHelper.getCreatedPosts()
+    val pinnedPostIds = pinnedPosts.value.pinnedPostIds()
+    val createdPostIds = createdPosts.postIds()
 
     items(
         count = createdPosts.size,
@@ -64,11 +66,8 @@ fun LazyListScope.amityGlobalFeedLLS(
                 when (val data = globalPosts[index]) {
                     is AmityListItem.PostItem -> {
                         val post = data.post
-                        val isFeatured = pinnedPosts.value
-                            .any { pinned -> pinned.postId == post.getPostId() }
-                        val isIncludedInCreatedList = createdPosts
-                            .any { created -> created.getPostId() == post.getPostId() }
-                        if (!post.isSupportedDataTypes() || isFeatured || isIncludedInCreatedList) {
+                        // Same predicate the empty-state count uses — see AmityFeedRenderability.
+                        if (!data.isRenderableFeedItem(pinnedPostIds, createdPostIds)) {
                             return@items
                         }
 

@@ -100,7 +100,6 @@ import com.amity.socialcloud.uikit.community.compose.localization.DefaultAmitySo
 import com.amity.socialcloud.uikit.community.compose.localization.amitySocialConfigString
 import com.amity.socialcloud.uikit.common.ui.theme.amityColorWhite
 import com.amity.socialcloud.uikit.common.ui.theme.amityColorBlack
-import com.amity.socialcloud.uikit.common.ui.theme.amityColorPrimaryShade3
 import com.amity.socialcloud.uikit.common.ui.theme.amityDisabledColor
 import com.amity.socialcloud.uikit.community.compose.ui.components.radio.AmityFilledRadioIndicator
 
@@ -438,7 +437,7 @@ fun AmityCommunitySetupPage(
                 Box(
                     modifier = modifier
                         .aspectRatio(2f)
-                        .background(amityColorPrimaryShade3)
+                        .background(AmityTheme.colors.primaryShade3)
                         .background(amityColorBlack.copy(alpha = 0.5f))
                         .clickableWithoutRipple {
                             showMediaCameraSelectionSheet = true

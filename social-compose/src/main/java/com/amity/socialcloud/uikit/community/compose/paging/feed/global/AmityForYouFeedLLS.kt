@@ -24,6 +24,8 @@ fun LazyListScope.amityForYouFeedLLS(
     onClick: (AmityPost) -> Unit,
 ) {
     val createdPosts = AmityPostComposerHelper.getCreatedPosts()
+    val pinnedPostIds = pinnedPosts.value.pinnedPostIds()
+    val createdPostIds = createdPosts.postIds()
 
     // Newly created posts — appear immediately below the pinned section
     items(
@@ -58,9 +60,8 @@ fun LazyListScope.amityForYouFeedLLS(
         when (val item = forYouPosts[idx]) {
             is AmityListItem.PostItem -> {
                 val post = item.post
-                val isFeatured = pinnedPosts.value.any { pinned -> pinned.postId == post.getPostId() }
-                val isInCreatedList = createdPosts.any { it.getPostId() == post.getPostId() }
-                if (!post.isSupportedDataTypes() || isFeatured || isInCreatedList) return@items
+                // Same predicate the empty-state count uses — see AmityFeedRenderability.
+                if (!item.isRenderableFeedItem(pinnedPostIds, createdPostIds)) return@items
 
                 AmityPostContentComponent(
                     post = post,

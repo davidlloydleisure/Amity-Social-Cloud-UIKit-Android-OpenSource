@@ -1691,32 +1691,34 @@ fun AmityRoomPlayerPage(
             ) {
                 val postLink = AmityUIKitConfigController.getPostLink(post)
 
-                AmityBottomSheetActionItem(
-                    icon = R.drawable.amity_v4_link_icon,
-                    text = DefaultAmitySocialStringProvider.getInstance().getString("amity_social_status_copy_live_stream_link"),
-                    modifier = Modifier
-                        .padding(horizontal = 12.dp),
-                    color = AmityTheme.colors.base
-                ) {
-                    clipboardManager.setText(AnnotatedString(postLink))
-                    AmityUIKitSnackbar.publishSnackbarMessage(DefaultAmitySocialStringProvider.getInstance().getString("amity_social_toast_snackbar_link_copied"))
-                    // Delay the bottom sheet dismissal slightly
-                    CoroutineScope(Dispatchers.Main).launch {
-                        delay(100)
-                        showBottomSheet = false
+                if (postLink.isNotEmptyOrBlank()) {
+                    AmityBottomSheetActionItem(
+                        icon = R.drawable.amity_v4_link_icon,
+                        text = DefaultAmitySocialStringProvider.getInstance().getString("amity_social_status_copy_live_stream_link"),
+                        modifier = Modifier
+                            .padding(horizontal = 12.dp),
+                        color = AmityTheme.colors.base
+                    ) {
+                        clipboardManager.setText(AnnotatedString(postLink))
+                        AmityUIKitSnackbar.publishSnackbarMessage(DefaultAmitySocialStringProvider.getInstance().getString("amity_social_toast_snackbar_link_copied"))
+                        // Delay the bottom sheet dismissal slightly
+                        CoroutineScope(Dispatchers.Main).launch {
+                            delay(100)
+                            showBottomSheet = false
+                        }
                     }
-                }
 
-                AmityBottomSheetActionItem(
-                    icon = R.drawable.amity_v4_share_icon,
-                    text = DefaultAmitySocialStringProvider.getInstance().getString("amity_social_button_share_to"),
-                    modifier = Modifier
-                        .padding(horizontal = 12.dp),
-                    color = AmityTheme.colors.base
-                ) {
-                    showBottomSheet = false
-                    // Open native Android share sheet
-                    sharePost(context, postLink)
+                    AmityBottomSheetActionItem(
+                        icon = R.drawable.amity_v4_share_icon,
+                        text = DefaultAmitySocialStringProvider.getInstance().getString("amity_social_button_share_to"),
+                        modifier = Modifier
+                            .padding(horizontal = 12.dp),
+                        color = AmityTheme.colors.base
+                    ) {
+                        showBottomSheet = false
+                        // Open native Android share sheet
+                        sharePost(context, postLink)
+                    }
                 }
             }
 

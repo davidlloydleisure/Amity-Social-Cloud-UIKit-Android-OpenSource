@@ -64,6 +64,7 @@ fun AmityCommunityAvatarWithRoundedCornerView(
     size: Dp = 80.dp,
     community: AmityCommunity?,
     roundedCornerShape: RoundedCornerShape = RoundedCornerShape(4.dp),
+    showPlaceholderScrim: Boolean = true,
 ) {
     val url = community?.getAvatar()?.getUrl(AmityImage.Size.MEDIUM)?.ifEmpty { null }
 
@@ -91,7 +92,7 @@ fun AmityCommunityAvatarWithRoundedCornerView(
                 modifier = Modifier
                     .size(size)
                     .clip(roundedCornerShape)
-                    .background(AmityTheme.colors.primaryShade1)
+                    .background(AmityTheme.colors.baseShade3)
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.amity_ic_community_placeholder),
@@ -101,6 +102,23 @@ fun AmityCommunityAvatarWithRoundedCornerView(
                         .align(Alignment.Center)
                         .size(40.dp)
                 )
+                // The other platforms scrim the default thumbnail, glyph included. A labelled tile
+                // already draws the same scrim to keep its label readable, so it opts out here
+                // rather than stacking two.
+                if (showPlaceholderScrim) {
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .background(
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color.Transparent,
+                                        amityColorBlack.copy(alpha = 0.4f)
+                                    )
+                                )
+                            )
+                    )
+                }
             }
         }
     }
@@ -122,6 +140,7 @@ fun AmityCommunityAvatarWithLabelView(
             size = size,
             community = community,
             roundedCornerShape = RoundedCornerShape(4.dp),
+            showPlaceholderScrim = label.isNullOrEmpty(),
         )
 
         if (!label.isNullOrEmpty()) {

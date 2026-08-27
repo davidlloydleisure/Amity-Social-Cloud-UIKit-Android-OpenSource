@@ -87,6 +87,7 @@ fun AmityPostMenuBottomSheet(
     }
 
     val postLink = AmityUIKitConfigController.getPostLink(post)
+    val hasPostLink = postLink.isNotEmptyOrBlank()
     val hasDeleteCommunityPostPermission by viewModel.hasDeleteCommunityPostPermission.collectAsState()
 
     val hasDeleteUserFeedPostPermission by viewModel.hasDeleteUserFeedPostPermission.collectAsState()
@@ -239,7 +240,7 @@ fun AmityPostMenuBottomSheet(
                             }
                         }
 
-                        if (viewModel.isNotMember(post) && AmityUIKitConfigController.getPostLink(post).isNotEmptyOrBlank()) {
+                        if (viewModel.isNotMember(post) && hasPostLink) {
                             AmityBottomSheetActionItem(
                                 icon = R.drawable.amity_v4_link_icon,
                                 text = DefaultAmitySocialStringProvider.getInstance().getString("amity_social_label_copy_post_link"),
@@ -280,31 +281,32 @@ fun AmityPostMenuBottomSheet(
                 }
 
                 is AmityPostMenuSheetUIState.OpenShareSheet -> {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = modifier
-                            .padding(start = 16.dp, end = 16.dp, bottom = 32.dp)
-                    ) {
-                        AmityBottomSheetActionItem(
-                            icon = R.drawable.amity_v4_link_icon,
-                            text = DefaultAmitySocialStringProvider.getInstance().getString("amity_social_label_copy_post_link"),
-                            modifier = modifier.testTag("bottom_sheet_copy_link_button"),
+                    if (hasPostLink) {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = modifier
+                                .padding(start = 16.dp, end = 16.dp, bottom = 32.dp)
                         ) {
-                            viewModel.updateSheetUIState(AmityPostMenuSheetUIState.CloseSheet)
-                            // Generate the post link URL (adjust the URL format according to your app's deep linking structure)
-                            // Copy to clipboard
-                            clipboardManager.setText(AnnotatedString(postLink))
-                            AmityUIKitSnackbar.publishSnackbarMessage(DefaultAmitySocialStringProvider.getInstance().getString("amity_social_toast_snackbar_link_copied"))
-                        }
+                            AmityBottomSheetActionItem(
+                                icon = R.drawable.amity_v4_link_icon,
+                                text = DefaultAmitySocialStringProvider.getInstance().getString("amity_social_label_copy_post_link"),
+                                modifier = modifier.testTag("bottom_sheet_copy_link_button"),
+                            ) {
+                                viewModel.updateSheetUIState(AmityPostMenuSheetUIState.CloseSheet)
+                                // Copy to clipboard
+                                clipboardManager.setText(AnnotatedString(postLink))
+                                AmityUIKitSnackbar.publishSnackbarMessage(DefaultAmitySocialStringProvider.getInstance().getString("amity_social_toast_snackbar_link_copied"))
+                            }
 
-                        AmityBottomSheetActionItem(
-                            icon = R.drawable.amity_v4_share_icon,
-                            text = DefaultAmitySocialStringProvider.getInstance().getString("amity_social_button_share_to"),
-                            modifier = modifier.testTag("bottom_sheet_share_to_button"),
-                        ) {
-                            viewModel.updateSheetUIState(AmityPostMenuSheetUIState.CloseSheet)
-                            // Open native Android share sheet
-                            sharePost(context, postLink)
+                            AmityBottomSheetActionItem(
+                                icon = R.drawable.amity_v4_share_icon,
+                                text = DefaultAmitySocialStringProvider.getInstance().getString("amity_social_button_share_to"),
+                                modifier = modifier.testTag("bottom_sheet_share_to_button"),
+                            ) {
+                                viewModel.updateSheetUIState(AmityPostMenuSheetUIState.CloseSheet)
+                                // Open native Android share sheet
+                                sharePost(context, postLink)
+                            }
                         }
                     }
                 }
