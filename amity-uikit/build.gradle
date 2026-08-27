@@ -31,5 +31,8 @@ dependencies {
     api "$amitySDKDependency:amity-sdk:$amityMessagingSdkVersion"
     // Previously reached transitively via the v3 :social module's api deps.
     api "$amitySDKDependency:amity-video-publisher:$amityMessagingSdkVersion"
-    api "$amitySDKDependency:amity-video-player:$amityMessagingSdkVersion"
+    api("$amitySDKDependency:amity-video-player:$amityMessagingSdkVersion") {
+        exclude group: "com.github.mcxinyu", module: "LibRtmp-Client-for-Android"
+        exclude group: "androidx.media3", module: "media3-datasource-rtmp"
+    }
 }

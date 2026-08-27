@@ -82,7 +82,10 @@ dependencies {
     implementation "androidx.camera:camera-view:1.5.1"
     implementation "androidx.camera:camera-extensions:1.5.1"
     implementation("$amitySDKDependency:amity-video-publisher:$amityMessagingSdkVersion")
-    implementation("$amitySDKDependency:amity-video-player:$amityMessagingSdkVersion")
+    implementation("$amitySDKDependency:amity-video-player:$amityMessagingSdkVersion") {
+        exclude group: "com.github.mcxinyu", module: "LibRtmp-Client-for-Android"
+        exclude group: "androidx.media3", module: "media3-datasource-rtmp"
+    }
     implementation "androidx.media3:media3-exoplayer-hls:$media3Version"
 
     // Depend on LiveKit SDK separately to keep up to date.
