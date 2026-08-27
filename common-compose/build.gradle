@@ -1,6 +1,5 @@
 plugins {
-    id 'com.android.library'
-    id 'com.android.built-in-kotlin'
+    id 'oneapp.android.library'
     id 'com.google.devtools.ksp'
     id 'kotlin-parcelize'
     id 'org.jetbrains.kotlin.plugin.compose'
