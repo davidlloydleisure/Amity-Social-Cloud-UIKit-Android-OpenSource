@@ -53,6 +53,7 @@ import com.amity.socialcloud.uikit.community.compose.post.detail.AmityPostCatego
 import com.amity.socialcloud.uikit.community.compose.post.detail.elements.AmityPostContentElement
 import com.amity.socialcloud.uikit.community.compose.post.detail.elements.AmityPostEngagementView
 import com.amity.socialcloud.uikit.community.compose.post.detail.elements.AmityPostHeaderElement
+import com.amity.socialcloud.uikit.community.compose.post.detail.elements.AmityPostEventElement
 import com.amity.socialcloud.uikit.community.compose.post.detail.elements.AmityPostLivestreamElement
 import com.amity.socialcloud.uikit.community.compose.post.detail.elements.AmityPostMediaElement
 import com.amity.socialcloud.uikit.community.compose.post.detail.elements.AmityPostNonMemberSection
@@ -256,6 +257,37 @@ fun AmityPostContentComponent(
                 AmityPostLivestreamElement(
                     modifier = modifier,
                     post = post
+                )
+            } else if (post.getChildren().any { it.getData() is AmityPost.Data.EVENT }) {
+                AmityPostEventElement(
+                    modifier = modifier,
+                    componentScope = getComponentScope(),
+                    post = post,
+                    style = style,
+                    boldedText = boldedText,
+                    onClick = {
+                        if (!isPostDetailPage) {
+                            onTapAction()
+                        }
+                    },
+                    onEventClick = { eventId ->
+                        behavior.goToEventDetailPage(
+                            context = context,
+                            eventId = eventId,
+                        )
+                    },
+                    onMentionedUserClick = {
+                        behavior.goToUserProfilePage(
+                            context = context,
+                            userId = it,
+                        )
+                    },
+                    onHashtagClick = {
+                        behavior.goToGlobalSearchPage(
+                            context = context,
+                            prefilledText = it
+                        )
+                    }
                 )
             } else if (post.getChildren().any { it.getData() is AmityPost.Data.POLL }) {
 

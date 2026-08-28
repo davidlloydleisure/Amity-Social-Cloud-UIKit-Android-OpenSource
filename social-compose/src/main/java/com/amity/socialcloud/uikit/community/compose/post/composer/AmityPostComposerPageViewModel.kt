@@ -17,6 +17,8 @@ import com.amity.socialcloud.sdk.model.core.file.AmityVideo
 import com.amity.socialcloud.sdk.model.core.file.upload.AmityUploadResult
 import com.amity.socialcloud.sdk.model.core.link.AmityLink
 import com.amity.socialcloud.sdk.model.social.community.AmityCommunity
+import com.amity.socialcloud.sdk.model.social.event.AmityEvent
+import com.amity.socialcloud.sdk.model.social.event.AmityEventStatus
 import com.amity.socialcloud.sdk.model.social.post.AmityPost
 import com.amity.socialcloud.uikit.common.service.AmityFileService
 import com.amity.socialcloud.uikit.community.compose.post.model.AmityFileUploadState
@@ -32,6 +34,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -40,6 +43,7 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 import androidx.core.net.toUri
 import com.amity.socialcloud.sdk.helper.core.asAmityImage
+import com.amity.socialcloud.sdk.helper.core.coroutines.asFlow
 import com.amity.socialcloud.sdk.helper.core.hashtag.AmityHashtag
 import com.amity.socialcloud.sdk.helper.core.metadata.AmityPostMetadataCreator
 import com.amity.socialcloud.sdk.model.core.file.AmityClip
@@ -81,6 +85,29 @@ class AmityPostComposerPageViewModel : AmityMediaAttachmentViewModel() {
         MutableStateFlow<AmityPost?>(null)
     }
     val post get() = _post
+
+    // Share-event-as-post: the event attached to this post (rendered as an event card in the
+    // composer). Fetched by id from AmityPostComposerCreateOptions.attachedEventId. Null when the
+    // post has no attached event.
+    private val _selectedEvent = MutableStateFlow<AmityEvent?>(null)
+    val selectedEvent: StateFlow<AmityEvent?> = _selectedEvent.asStateFlow()
+
+    /**
+     * Share-event-as-post: how far the attached event has got. A plain null [selectedEvent] cannot
+     * distinguish "still loading" from "the event is gone", and the two must behave differently
+     * when editing — an event post whose event was deleted still has to save its text edits.
+     */
+    sealed interface AttachedEventState {
+        data object Loading : AttachedEventState
+        data object Unavailable : AttachedEventState
+        data class Resolved(val event: AmityEvent) : AttachedEventState
+    }
+
+    private val _attachedEventState = MutableStateFlow<AttachedEventState>(AttachedEventState.Loading)
+    val attachedEventState: StateFlow<AttachedEventState> = _attachedEventState.asStateFlow()
+
+    // Share-event-as-post: id of the event attached to this post, used to create the event post.
+    private var attachedEventId: String? = null
 
     private val mediaMap = java.util.LinkedHashMap<String, AmityPostMedia>()
     private val uploadedMediaMap = LinkedHashMap<String, AmityFileInfo>()
@@ -532,6 +559,8 @@ class AmityPostComposerPageViewModel : AmityMediaAttachmentViewModel() {
         when (options) {
             is AmityPostComposerOptions.AmityPostComposerCreateOptions -> {
                 this.community = options.community
+                this.attachedEventId = options.attachedEventId
+                loadAttachedEvent(options.attachedEventId)
             }
 
             is AmityPostComposerOptions.AmityPostComposerCreateClipOptions -> {
@@ -539,12 +568,52 @@ class AmityPostComposerPageViewModel : AmityMediaAttachmentViewModel() {
             }
 
             is AmityPostComposerOptions.AmityPostComposerEditOptions -> {
+                // Editing an event post: resolve the attached event so its card renders in the
+                // composer. The event reference is immutable — it is loaded for display only and
+                // never re-sent on save (see updatePost).
+                val eventId = (options.post.getChildren()
+                    .firstOrNull { it.getData() is AmityPost.Data.EVENT }
+                    ?.getData() as? AmityPost.Data.EVENT)?.getEventId()
+                this.attachedEventId = eventId
+                eventId?.let { loadAttachedEvent(it) }
                 preparePostData(options.post.getPostId())
             }
 
             is AmityPostComposerOptions.AmityPostComposerEditClipOptions -> {
                 preparePostData(options.post.getPostId())
             }
+        }
+    }
+
+    /**
+     * Share-event-as-post: fetch the attached event by id so the composer can render its card.
+     * Kept as a live subscription so the card reflects the latest event data (title, cover, times).
+     *
+     * A fetch failure — or a CANCELLED event, which is semantically the same as a deleted one
+     * (spec REQ-126) — resolves to [AttachedEventState.Unavailable] rather than staying on the
+     * loading state, so an event post whose event has gone can still save its text edits.
+     */
+    private fun loadAttachedEvent(eventId: String?) {
+        if (eventId.isNullOrBlank()) return
+        viewModelScope.launch {
+            AmitySocialClient.newEventRepository()
+                .getEvent(eventId)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .asFlow()
+                .catch {
+                    _selectedEvent.value = null
+                    _attachedEventState.value = AttachedEventState.Unavailable
+                }
+                .collect { event ->
+                    if (event.getStatus() == AmityEventStatus.CANCELLED) {
+                        _selectedEvent.value = null
+                        _attachedEventState.value = AttachedEventState.Unavailable
+                    } else {
+                        _selectedEvent.value = event
+                        _attachedEventState.value = AttachedEventState.Resolved(event)
+                    }
+                }
         }
     }
 
@@ -840,6 +909,53 @@ class AmityPostComposerPageViewModel : AmityMediaAttachmentViewModel() {
         // Add special handling for clip posts
         val isClipPost = options is AmityPostComposerOptions.AmityPostComposerEditClipOptions
 
+        // Event posts: only the author's caption (title/text) is editable. The event reference and
+        // the (empty) attachment set must never be touched — an event post carries no media, so the
+        // generic parent-update path (which rewrites attachments) must not run. Empty save is valid.
+        val isEventPost = _post.value?.getChildren()
+            ?.any { it.getData() is AmityPost.Data.EVENT } == true
+
+        if (isEventPost) {
+            val postEditor = AmitySocialClient.newPostRepository()
+                .editPost(postId = postId)
+                .text(postText.trim())
+            if (postTitle != null) {
+                postEditor.title(postTitle)
+            }
+
+            val metadata = createMetadata(mentionedUsers, hashtags)
+            val mentionUserIds = mentionedUsers.map { it.getUserId() }.toSet()
+            postEditor.apply {
+                metadata?.let {
+                    this.metadata(metadata)
+                    this.mentionUsers(mentionUserIds.toList())
+                    this.hashtags(hashtags.map { it.getText() })
+                }
+            }
+
+            postEditor.build().apply()
+                .andThen(Single.defer {
+                    AmitySocialClient.newPostRepository()
+                        .getPost(postId)
+                        .firstOrError()
+                })
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .doOnSuccess {
+                    if (it.getReviewStatus() == AmityReviewStatus.UNDER_REVIEW) {
+                        setPostCreationEvent(AmityPostCreationEvent.Pending)
+                    } else {
+                        AmityPostComposerHelper.updatePost(postId)
+                        setPostCreationEvent(AmityPostCreationEvent.Success)
+                    }
+                }
+                .doOnError {
+                    setPostCreationEvent(AmityPostCreationEvent.Failed(it))
+                }
+                .subscribe()
+            return
+        }
+
         if (isClipPost) {
             // For clip posts, only update the text without modifying attachments
             val postEditor = AmitySocialClient.newPostRepository()
@@ -1090,6 +1206,21 @@ class AmityPostComposerPageViewModel : AmityMediaAttachmentViewModel() {
         val mentionUserIds = mentionedUsers.map { it.getUserId() }.toSet()
 
         when {
+            // Share-event-as-post: an attached event takes precedence — it creates an "event" post
+            // and can't coexist with media. Title/text are the author's (prefilled from the event).
+            !attachedEventId.isNullOrBlank() -> {
+                createPostEvent(
+                    eventId = attachedEventId!!,
+                    postText = postText,
+                    title = postTitle,
+                    targetType = targetType,
+                    targetId = targetId,
+                    metadata = metadata,
+                    mentionUserIds = mentionUserIds,
+                    hashtags = hashtags.map { it.getText() },
+                )
+            }
+
             isUploadedImageMedia() -> {
                 val orderById =
                     mediaMap.values.withIndex().associate { it.value.id to it.index }
@@ -1180,6 +1311,29 @@ class AmityPostComposerPageViewModel : AmityMediaAttachmentViewModel() {
                 setPostCreationEvent(AmityPostCreationEvent.Failed(it))
             }
             .subscribe()
+    }
+
+    private fun createPostEvent(
+        eventId: String,
+        postText: String,
+        title: String?,
+        targetType: AmityPost.TargetType,
+        targetId: String,
+        metadata: JsonObject?,
+        mentionUserIds: Set<String>,
+        hashtags: List<String>,
+    ): Single<AmityPost> {
+        return AmitySocialClient.newPostRepository()
+            .createEventPost(
+                targetType = targetType,
+                targetId = targetId,
+                eventId = eventId,
+                text = postText,
+                title = title,
+                metadata = metadata,
+                mentionUserIds = mentionUserIds,
+                hashtags = hashtags,
+            )
     }
 
     private fun createPostText(

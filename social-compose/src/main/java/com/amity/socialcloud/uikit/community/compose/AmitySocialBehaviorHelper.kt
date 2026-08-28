@@ -35,6 +35,7 @@ import com.amity.socialcloud.uikit.community.compose.story.target.AmityStoryTabC
 import com.amity.socialcloud.uikit.community.compose.story.view.AmityViewStoryPageBehavior
 import com.amity.socialcloud.uikit.community.compose.event.detail.AmityEventDetailPageBehavior
 import com.amity.socialcloud.uikit.community.compose.target.event.AmityEventTargetSelectionPageBehavior
+import com.amity.socialcloud.uikit.community.compose.target.eventpost.AmityEventPostTargetSelectionPageBehavior
 import com.amity.socialcloud.uikit.community.compose.target.livestream.AmityLivestreamPostTargetSelectionPageBehavior
 import com.amity.socialcloud.uikit.community.compose.target.poll.AmityPollTargetSelectionPageBehavior
 import com.amity.socialcloud.uikit.community.compose.target.post.AmityPostTargetSelectionPageBehavior
@@ -56,6 +57,7 @@ object AmitySocialBehaviorHelper {
         AmityPost.DataType.LIVE_STREAM,
         AmityPost.DataType.CLIP,
         AmityPost.DataType.ROOM,
+        AmityPost.DataType.EVENT,
     )
 
     val supportedStructureTypes = listOf(
@@ -66,6 +68,7 @@ object AmitySocialBehaviorHelper {
         AmityPost.StructureType.LIVESTREAM,
         AmityPost.StructureType.CLIP,
         AmityPost.StructureType.ROOM,
+        AmityPost.StructureType.EVENT,
     )
 
     var showPollResultInDetailFirst = false
@@ -99,6 +102,9 @@ object AmitySocialBehaviorHelper {
 
     var eventTargetSelectionPageBehavior: AmityEventTargetSelectionPageBehavior =
         AmityEventTargetSelectionPageBehavior()
+
+    var eventPostTargetSelectionPageBehavior: AmityEventPostTargetSelectionPageBehavior =
+        AmityEventPostTargetSelectionPageBehavior()
 
     var eventDetailPageBehavior: AmityEventDetailPageBehavior =
         AmityEventDetailPageBehavior()

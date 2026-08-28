@@ -277,7 +277,12 @@ fun ChatOverlay(
                         )
                     }
                     is AmityLiveStreamSheetUIState.OpenReportSheet -> {
+                        // PDT-4730: pass the page scope, or the component resolves its theme
+                        // against "*//*", finds nothing, falls back to the GLOBAL theme, and its
+                        // Scaffold paints white on a light device. With it the theme resolves to
+                        // "live_stream_page/*/*", whose light and dark palettes are identical.
                         AmityBaseComponent(
+                            pageScope = pageScope,
                             componentId = "",
                             needScaffold = true
                         ) {
@@ -306,7 +311,12 @@ fun ChatOverlay(
                     }
 
                     is AmityLiveStreamSheetUIState.OpenReportOtherReasonSheet -> {
+                        // PDT-4730: pass the page scope, or the component resolves its theme
+                        // against "*//*", finds nothing, falls back to the GLOBAL theme, and its
+                        // Scaffold paints white on a light device. With it the theme resolves to
+                        // "live_stream_page/*/*", whose light and dark palettes are identical.
                         AmityBaseComponent(
+                            pageScope = pageScope,
                             componentId = "",
                             needScaffold = true
                         ) {

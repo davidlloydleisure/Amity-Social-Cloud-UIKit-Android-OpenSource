@@ -11,7 +11,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.amity.socialcloud.uikit.common.ui.base.AmityBaseElement
+import com.amity.socialcloud.uikit.common.ui.scope.AmityComposePageScope
 import com.amity.socialcloud.uikit.common.ui.theme.AmityTheme
+import com.amity.socialcloud.uikit.common.utils.getIcon
+import com.amity.socialcloud.uikit.common.utils.getText
 import com.amity.socialcloud.uikit.community.compose.R
 import com.amity.socialcloud.uikit.community.compose.localization.amitySocialString
 
@@ -20,17 +24,22 @@ import com.amity.socialcloud.uikit.community.compose.localization.amitySocialStr
 fun AmityEventMenuBottomSheet(
     shouldShow: Boolean,
     onDismiss: () -> Unit,
+    // Supplied by AmityEventDetailPage so "Post event to feed" can resolve its
+    // `event_detail_page/*/create_event_post_button` config.
+    pageScope: AmityComposePageScope? = null,
     onEditClick: () -> Unit,
     onDeleteClick: () -> Unit,
     onAddToCalendarClick: () -> Unit = {},
     onCopyLinkClick: () -> Unit = {},
     onShareClick: () -> Unit = {},
+    onPostToFeedClick: () -> Unit = {},
     eventStartTime: org.joda.time.DateTime? = null,
     eventEndTime: org.joda.time.DateTime? = null,
     isEventCreator: Boolean = false,
     hasDeletePermission: Boolean = false,
     hasRsvpd: Boolean = false,
-    showShareActions: Boolean = false
+    showShareActions: Boolean = false,
+    showPostToFeed: Boolean = false
 ) {
     var showEditingNotPossibleDialog by remember { mutableStateOf(false) }
 
@@ -103,6 +112,54 @@ fun AmityEventMenuBottomSheet(
                             ),
                             color = AmityTheme.colors.base
                         )
+                    }
+                }
+
+                // Post event to feed - shares the event as a post. Opens the "Post to" community
+                // picker, then the composer with the event card attached and title/body prefilled.
+                if (showPostToFeed) {
+                    AmityBaseElement(
+                        pageScope = pageScope,
+                        elementId = "create_event_post_button"
+                    ) {
+                        // Label and icon are overridable via config. Both default to blank, and the
+                        // drawable resolver maps an unknown name onto an empty drawable rather than
+                        // 0, so the raw string decides whether an override was actually supplied.
+                        val label = getConfig().getText().ifBlank {
+                            amitySocialString("amity_social_button_post_event_to_feed")
+                        }
+                        val configuredImage = getConfig().get("image")?.asString.orEmpty()
+                        val iconRes = if (configuredImage.isBlank()) {
+                            R.drawable.amity_ic_event_add_to_feed
+                        } else {
+                            getConfig().getIcon()
+                        }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    onPostToFeedClick()
+                                    onDismiss()
+                                }
+                                .padding(horizontal = 16.dp, vertical = 16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                painter = painterResource(iconRes),
+                                contentDescription = label,
+                                tint = AmityTheme.colors.base,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Text(
+                                text = label,
+                                style = AmityTheme.typography.body.copy(
+                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 15.sp
+                                ),
+                                color = AmityTheme.colors.base
+                            )
+                        }
                     }
                 }
 

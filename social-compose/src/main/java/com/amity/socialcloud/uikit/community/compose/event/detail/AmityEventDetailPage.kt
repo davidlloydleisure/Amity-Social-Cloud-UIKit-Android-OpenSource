@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -45,6 +46,10 @@ import com.amity.socialcloud.uikit.community.compose.event.detail.components.Ami
 import com.amity.socialcloud.uikit.community.compose.event.detail.components.amityEventDiscussionFeedItems
 import com.amity.socialcloud.uikit.community.compose.event.detail.elements.AmityEventDiscussionActionsBottomSheet
 import com.amity.socialcloud.uikit.community.compose.event.detail.elements.AmityEventMenuBottomSheet
+import com.amity.socialcloud.uikit.community.compose.event.detail.elements.AmityEventPostCreationSuccessBottomSheet
+import com.amity.socialcloud.uikit.community.compose.post.composer.AmityPostComposerOptions
+import com.amity.socialcloud.uikit.community.compose.post.composer.AmityPostComposerPageActivity
+import com.amity.socialcloud.uikit.community.compose.post.composer.AmityPostTargetType
 import com.amity.socialcloud.uikit.community.compose.post.composer.poll.AmityPollPostTypeSelectionBottomSheet
 import com.amity.socialcloud.uikit.community.compose.ui.shimmer.AmityEventDetailShimmer
 import com.amity.socialcloud.uikit.community.compose.ui.shimmer.AmityEventAboutTabShimmer
@@ -134,6 +139,10 @@ fun AmityEventDetailPage(
     var showJoinCommunityBottomSheet by remember { mutableStateOf(false) }
     var showPendingApprovalDialog by remember { mutableStateOf(false) }
     var showEditingNotPossibleDialog by remember { mutableStateOf(false) }
+    // Post-creation success sheet (entry point A): shown once to the host when they land here
+    // straight after creating the event, replacing the plain "event created" toast.
+    var showPostToFeedSuccessSheet by remember { mutableStateOf(false) }
+    var eventCreatedHandled by rememberSaveable { mutableStateOf(false) }
     var showPendingJoinDialog by remember { mutableStateOf(false) }
 
     // Get error state from ViewModel
@@ -193,10 +202,13 @@ fun AmityEventDetailPage(
         }
     }
 
-    // Show success toast when coming from event creation
-    LaunchedEffect(showSuccessToast) {
-        if (showSuccessToast) {
-            AmityUIKitSnackbar.publishSnackbarMessage(DefaultAmitySocialStringProvider.getInstance().getString("amity_social_toast_snackbar_event_created"))
+    // Coming from event creation: the host who just created the event gets the "post it to a feed"
+    // success sheet (entry point A) instead of a toast. Wait until the event has loaded so the sheet
+    // renders with its data. Anyone else arriving with this flag still gets the plain toast.
+    LaunchedEffect(showSuccessToast, event) {
+        if (showSuccessToast && event != null && !eventCreatedHandled) {
+            eventCreatedHandled = true
+            showPostToFeedSuccessSheet = true
         }
     }
 
@@ -251,7 +263,21 @@ fun AmityEventDetailPage(
     val isOriginPublic = event?.getTargetCommunity()?.isPublic() == true
     val showShareActions = eventShareUrl != null && isOriginPublic && isShareableStatus
 
-    val showMenu = isEventCreator || hasDeleteEventPermission || isGoing == true || showShareActions
+    // Post-event-to-feed visibility follows the permission matrix and nothing else (spec REQ-011):
+    // host / moderator / member of the origin community can post the event (public or private);
+    // non-members and visitors cannot. Deliberately NOT gated on the share-link conditions or on
+    // event status — REQ-011.4 says visibility must not depend on where the event was created, and
+    // no status rule is specified, so the action stays available for every status. A private-
+    // community event's post is allowed too, it just gets locked to that community (REQ-012).
+    // PDT-4734: hasDeleteEventPermission was what leaked this to non-members. Moderators of the
+    // origin community are members, so isMember already covers the moderator half of REQ-011; the
+    // permission term only ever added someone who can delete events WITHOUT belonging to the
+    // community -- a network-level admin -- which is precisely the non-member case the action must
+    // stay hidden from. iOS gates on host-or-joined and nothing else; match it. isMember comes from
+    // the separately fetched target community, the same source the discussion FAB uses.
+    val canPostEventToFeed = isEventCreator || isMember
+
+    val showMenu = isEventCreator || hasDeleteEventPermission || isGoing == true || showShareActions || canPostEventToFeed
 
     // Setup paging data for discussion feed
     val announcementPosts = remember(communityId) {
@@ -661,9 +687,21 @@ fun AmityEventDetailPage(
                 val currentUserId = AmityCoreClient.getUserId()
                 val isEventCreator = event!!.getCreator()?.getUserId() == currentUserId
 
+                // Share-event-as-post. The target-selection page is presented for every event-post
+                // flow and picks its own variant from the event's origin (spec REQ-001), so there is
+                // no routing decision here. Shared by the 3-dot menu item and the post-creation
+                // success sheet (entry point A).
+                val launchPostToFeed: () -> Unit = {
+                    behavior.goToEventPostTargetSelectionPage(
+                        context = AmityEventDetailPageBehavior.Context(pageContext = context),
+                        event = event!!,
+                    )
+                }
+
                 // showShareActions is hoisted above (gates both the menu icon and these items)
                 AmityEventMenuBottomSheet(
                     shouldShow = showEventMenuBottomSheet,
+                    pageScope = getPageScope(),
                     onDismiss = { showEventMenuBottomSheet = false },
                     onEditClick = {
                         behavior.goToEditEventPage(
@@ -735,12 +773,25 @@ fun AmityEventDetailPage(
                             }
                         }
                     },
+                    onPostToFeedClick = { launchPostToFeed() },
                     eventStartTime = event!!.getStartTime(),
                     eventEndTime = event!!.getEndTime(),
                     isEventCreator = isEventCreator,
                     hasDeletePermission = hasDeleteEventPermission,
                     hasRsvpd = isGoing == true,
-                    showShareActions = showShareActions
+                    showShareActions = showShareActions,
+                    showPostToFeed = canPostEventToFeed
+                )
+
+                // Post-creation success sheet (entry point A): one-time nudge for the host to share
+                // the event they just created. "Post to feed" reuses the same routing as the menu item.
+                AmityEventPostCreationSuccessBottomSheet(
+                    shouldShow = showPostToFeedSuccessSheet,
+                    onDismiss = { showPostToFeedSuccessSheet = false },
+                    onPostToFeed = {
+                        showPostToFeedSuccessSheet = false
+                        launchPostToFeed()
+                    },
                 )
             }
 

@@ -1385,8 +1385,7 @@ fun AmityCreateLivestreamPage(
 
         if (showLivestreamLimitSnackBar) {
             AmityUIKitSnackbar.publishSnackbarErrorMessage(
-                message = DefaultAmitySocialStringProvider.getInstance().getString("amity_social_toast_create_livestream_duration_exceed_snackbar"),
-                offsetFromBottom = 130
+                message = DefaultAmitySocialStringProvider.getInstance().getString("amity_social_toast_create_livestream_duration_exceed_snackbar")
             )
             showLivestreamLimitSnackBar = false
         }

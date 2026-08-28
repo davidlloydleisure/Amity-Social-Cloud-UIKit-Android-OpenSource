@@ -337,6 +337,12 @@ fun AmityForYouFeedComponent(
                                 category = AmityPostCategory.GENERAL,
                                 autoFocusCommentInput = false,
                             )
+                        },
+                        onClipClick = { childPost ->
+                            behavior.goToClipFeedPage(
+                                context = context,
+                                postId = childPost.getPostId()
+                            )
                         }
                     )
 

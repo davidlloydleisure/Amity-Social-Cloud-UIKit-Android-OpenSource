@@ -690,6 +690,17 @@
     "select_post_target_page/*/my_timeline_avatar": {},
     "select_post_target_page/*/title": {},
     "select_post_target_page/*/my_timeline_text": {},
+    "event_post_target_selection_page/*/*": {},
+    "event_post_target_selection_page/*/close_button": {
+      "image": "closeIcon"
+    },
+    "event_post_target_selection_page/*/my_timeline_avatar": {},
+    "event_post_target_selection_page/*/title": {},
+    "event_post_target_selection_page/*/my_timeline_text": {},
+    "event_detail_page/*/create_event_post_button": {
+      "text": "Post event to feed",
+      "image": ""
+    },
     "select_event_target_page/*/close_button": {
       "image": "closeIcon"
     },

@@ -937,13 +937,11 @@ class AmityRoomPlayerViewModel(private val post: AmityPost) : AmityBaseViewModel
             .apply()
             .doOnError {
                 AmityUIKitSnackbar.publishSnackbarMessage(
-                    offsetFromBottom = 50,
                     message = DefaultAmitySocialStringProvider.getInstance().getString("amity_social_toast_product_tag_add_failed")
                 )
             }
             .doOnComplete {
                 AmityUIKitSnackbar.publishSnackbarMessage(
-                    offsetFromBottom = 50,
                     message = DefaultAmitySocialStringProvider.getInstance().getString("amity_social_label_product_tags_added")
                 )
             }
@@ -966,13 +964,11 @@ class AmityRoomPlayerViewModel(private val post: AmityPost) : AmityBaseViewModel
             .apply()
             .doOnError {
                 AmityUIKitSnackbar.publishSnackbarMessage(
-                    offsetFromBottom = 50,
                     message = DefaultAmitySocialStringProvider.getInstance().getString("amity_social_toast_product_tag_remove_failed")
                 )
             }
             .doOnComplete {
                 AmityUIKitSnackbar.publishSnackbarMessage(
-                    offsetFromBottom = 50,
                     message = DefaultAmitySocialStringProvider.getInstance().getString("amity_social_label_product_tag_removed")
                 )
             }
@@ -998,12 +994,10 @@ class AmityRoomPlayerViewModel(private val post: AmityPost) : AmityBaseViewModel
             .doOnComplete {
                 if (productId == null) {
                     AmityUIKitSnackbar.publishSnackbarMessage(
-                        offsetFromBottom = 50,
                         message = DefaultAmitySocialStringProvider.getInstance().getString("amity_social_label_product_tag_unpinned")
                     )
                 } else {
                     AmityUIKitSnackbar.publishSnackbarMessage(
-                        offsetFromBottom = 50,
                         message = DefaultAmitySocialStringProvider.getInstance().getString("amity_social_label_product_tag_pinned")
                     )
                 }
@@ -1011,12 +1005,10 @@ class AmityRoomPlayerViewModel(private val post: AmityPost) : AmityBaseViewModel
             .doOnError {
                 if (productId == null) {
                     AmityUIKitSnackbar.publishSnackbarErrorMessage(
-                        offsetFromBottom = 50,
                         message = DefaultAmitySocialStringProvider.getInstance().getString("amity_social_toast_unpin_product_tag_failed")
                     )
                 } else {
                     AmityUIKitSnackbar.publishSnackbarErrorMessage(
-                        offsetFromBottom = 50,
                         message = DefaultAmitySocialStringProvider.getInstance().getString("amity_social_toast_pin_product_tag_failed")
                     )
                 }
