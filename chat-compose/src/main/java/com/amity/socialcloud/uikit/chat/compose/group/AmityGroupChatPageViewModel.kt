@@ -4,8 +4,8 @@ import android.net.Uri
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
-import androidx.paging.cachedIn
 import androidx.paging.TerminalSeparatorType
+import androidx.paging.cachedIn
 import androidx.paging.filter
 import androidx.paging.insertHeaderItem
 import androidx.paging.map
@@ -17,21 +17,20 @@ import com.amity.socialcloud.sdk.api.core.reaction.reference.AmityReactionRefere
 import com.amity.socialcloud.sdk.core.session.model.NetworkConnectionEvent
 import com.amity.socialcloud.sdk.helper.core.coroutines.asFlow
 import com.amity.socialcloud.sdk.helper.core.mention.AmityMentionMetadata
-import com.amity.socialcloud.uikit.common.eventbus.NetworkConnectionEventBus
 import com.amity.socialcloud.sdk.helper.core.mention.AmityMentionMetadataCreator
 import com.amity.socialcloud.sdk.model.chat.channel.AmityChannel
 import com.amity.socialcloud.sdk.model.chat.member.AmityChannelMember
 import com.amity.socialcloud.sdk.model.chat.message.AmityMessage
-import com.amity.socialcloud.sdk.model.chat.settings.AmityChatSettings
 import com.amity.socialcloud.sdk.model.core.error.AmityError
 import com.amity.socialcloud.sdk.model.core.error.AmityException
 import com.amity.socialcloud.sdk.model.core.flag.AmityContentFlagReason
 import com.amity.socialcloud.sdk.model.core.permission.AmityPermission
 import com.amity.socialcloud.uikit.chat.compose.live.mention.AmityMentionSuggestion
+import com.amity.socialcloud.uikit.chat.compose.localization.DefaultAmityChatStringProvider
 import com.amity.socialcloud.uikit.common.base.AmityBaseViewModel
 import com.amity.socialcloud.uikit.common.eventbus.AmityUIKitSnackbar
+import com.amity.socialcloud.uikit.common.eventbus.NetworkConnectionEventBus
 import com.amity.socialcloud.uikit.common.service.AmityFileService
-import com.amity.socialcloud.uikit.chat.compose.localization.DefaultAmityChatStringProvider
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.Flowable
@@ -43,7 +42,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 
 class AmityGroupChatPageViewModel(
@@ -81,6 +79,8 @@ class AmityGroupChatPageViewModel(
     private var latestReadSegment = 0
     private var latestReadMessage: AmityMessage? = null
 
+    private val _isActivelyViewing = MutableStateFlow(false)
+
     val messageList: Flow<PagingData<AmityMessage>> by lazy {
         AmityChatClient.newMessageRepository()
             .getMessages(channelId)
@@ -94,18 +94,25 @@ class AmityGroupChatPageViewModel(
             .cachedIn(viewModelScope)
     }
 
-    init {
+    fun onResume() {
+        _isActivelyViewing.value = true
         startReading()
     }
 
-    fun startReading() {
+    fun onPause() {
+        _isActivelyViewing.value = false
+        latestReadMessage?.let { it.markRead() }
+        stopReading()
+    }
+
+    private fun startReading() {
         AmityChatClient.newSubChannelRepository()
             .startMessageReceiptSync(channelId)
             .subscribeOn(Schedulers.io())
             .subscribe({}, {})
     }
 
-    fun stopReading() {
+    private fun stopReading() {
         AmityChatClient.newSubChannelRepository()
             .stopMessageReceiptSync(channelId)
             .subscribeOn(Schedulers.io())
@@ -113,6 +120,7 @@ class AmityGroupChatPageViewModel(
     }
 
     fun markMessageAsRead(message: AmityMessage) {
+        if (!_isActivelyViewing.value) return
         val segment = message.getSegment()
         if (segment > latestReadSegment) {
             message.markRead()
@@ -544,11 +552,6 @@ class AmityGroupChatPageViewModel(
             .subscribeOn(Schedulers.io())
             .doOnError { }
             .subscribe()
-    }
-
-    fun onStop() {
-        latestReadMessage?.let { it.markRead() }
-        stopReading()
     }
 
     fun getMessage(messageId: String): Flow<AmityMessage> {
