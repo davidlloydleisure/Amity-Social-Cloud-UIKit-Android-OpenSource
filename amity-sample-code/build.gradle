@@ -36,7 +36,7 @@ android {
 }
 
 dependencies {
-    api project(path: ':amity-uikit')
+    api project(path: ':amity:amity-uikit')
     implementation "androidx.media3:media3-common:$media3Version"
     implementation 'androidx.activity:activity-compose:1.6.0'
 

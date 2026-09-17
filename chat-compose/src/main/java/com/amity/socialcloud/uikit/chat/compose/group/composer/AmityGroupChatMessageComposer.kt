@@ -88,6 +88,7 @@ import com.amity.socialcloud.uikit.chat.compose.live.elements.AmityAvatarType
 import com.amity.socialcloud.uikit.chat.compose.live.elements.AmityMessageAvatarView
 import com.amity.socialcloud.uikit.chat.compose.live.mention.AmityMentionSuggestion
 import com.amity.socialcloud.uikit.chat.compose.localization.DefaultAmityChatStringProvider
+import com.amity.socialcloud.uikit.common.customization.ONE_APP_CUSTOMIZATION
 import com.amity.socialcloud.uikit.common.compose.R as CommonComposeR
 import com.amity.socialcloud.uikit.common.eventbus.AmityUIKitSnackbar
 import com.amity.socialcloud.uikit.common.localization.amityCommonString
@@ -390,7 +391,7 @@ private fun ComposerContent(
         // multi-line, and sit centered against the idle single-line input.
         verticalAlignment = Alignment.Bottom,
     ) {
-        if (editingMessage == null) {
+        if (!ONE_APP_CUSTOMIZATION && editingMessage == null) {
             AmityButton(
                 modifier = Modifier.padding(end = 12.dp, bottom = 8.dp),
                 variant = AmityButtonVariant.ICON,

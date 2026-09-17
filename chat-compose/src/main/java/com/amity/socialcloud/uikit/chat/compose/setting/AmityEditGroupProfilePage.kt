@@ -139,7 +139,7 @@ fun AmityEditGroupProfilePage(
                 val imageFile = AmityCameraUtil.createImageFile(context)
                 if (imageFile != null) {
                     cameraUri = AmityCameraUtil.createPhotoUri(context, imageFile)
-                    imageCaptureLauncher.launch(cameraUri)
+                    cameraUri?.let { imageCaptureLauncher.launch(it) }
                 }
             }
         }
