@@ -84,6 +84,7 @@ import com.amity.socialcloud.uikit.community.compose.post.detail.menu.AmityPostM
 import com.amity.socialcloud.uikit.community.compose.post.detail.menu.AmityPostMenuViewModel
 import kotlinx.coroutines.delay
 import com.amity.socialcloud.uikit.community.compose.localization.DefaultAmitySocialStringProvider
+import com.amity.socialcloud.uikit.community.compose.post.clubupdate.isClubUpdate
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -129,6 +130,10 @@ fun AmityPostDetailPage(
     val post by remember(id) {
         viewModel.getPost(id)
     }.collectAsState(initial = null)
+
+    // Club Update (APP-15330): no comment list and no composer. Resolved from the live post,
+    // so it also holds when the page is opened by id (e.g. from a notification).
+    val isClubUpdate = post?.isClubUpdate() == true
 
     val error by remember(id) {
         viewModel.getFetchErrorState()
@@ -366,10 +371,12 @@ fun AmityPostDetailPage(
                                     eventHostId = eventHostId,
                                     isNonMemberOfCommunity = isNotMember,
                                 )
-                                HorizontalDivider(
-                                    color = AmityTheme.colors.baseShade4,
-                                    modifier = Modifier
-                                )
+                                if (!isClubUpdate) {
+                                    HorizontalDivider(
+                                        color = AmityTheme.colors.baseShade4,
+                                        modifier = Modifier
+                                    )
+                                }
                             } else {
                                 AmityPostShimmer()
                             }
@@ -382,39 +389,41 @@ fun AmityPostDetailPage(
                             )
                         }
 
-                        amityCommentListLLS(
-                            modifier = Modifier,
-                            componentScope = getComponentScope(),
-                            comments = comments,
-                            commentTarget = commentTarget,
-                            commentListState = commentListState,
-                            referenceId = id,
-                            referenceType = AmityCommentReferenceType.POST,
-                            editingCommentId = editingCommentId,
-                            shouldAllowInteraction = true,
-                            showEngagementRow = true,
-                            eventHostId = eventHostId,
-                            onReply = { },
-                            onEdit = {
-                                editingCommentId = it
-                            },
-                            showBounceEffect = scrollAnimationComplete,
-                            replyTargetId = when {
-                                isL2 -> parentId    // L1 parent to sort to top and expand
-                                parentId != null -> commentId  // L1 reply to bounce
-                                else -> null
-                            },
-                            l2TargetId = if (isL2) commentId else null,
-                            expandReplies = parentId != null,
-                            fromNonMemberCommunity = isNotMember
-                        )
+                        if (!isClubUpdate) {
+                            amityCommentListLLS(
+                                modifier = Modifier,
+                                componentScope = getComponentScope(),
+                                comments = comments,
+                                commentTarget = commentTarget,
+                                commentListState = commentListState,
+                                referenceId = id,
+                                referenceType = AmityCommentReferenceType.POST,
+                                editingCommentId = editingCommentId,
+                                shouldAllowInteraction = true,
+                                showEngagementRow = true,
+                                eventHostId = eventHostId,
+                                onReply = { },
+                                onEdit = {
+                                    editingCommentId = it
+                                },
+                                showBounceEffect = scrollAnimationComplete,
+                                replyTargetId = when {
+                                    isL2 -> parentId    // L1 parent to sort to top and expand
+                                    parentId != null -> commentId  // L1 reply to bounce
+                                    else -> null
+                                },
+                                l2TargetId = if (isL2) commentId else null,
+                                expandReplies = parentId != null,
+                                fromNonMemberCommunity = isNotMember
+                            )
+                        }
 
                         item {
                             Box(Modifier.height(commentComposeBarBottomOffset.unaryMinus()))
                         }
                     }
 
-                    if (post != null && !isNotMember && editingCommentId == null && AmityCoreClient.isSignedIn()) {
+                    if (post != null && !isClubUpdate && !isNotMember && editingCommentId == null && AmityCoreClient.isSignedIn()) {
                         AmityCommentComposerBar(
                             modifier = Modifier.offset(y = commentComposeBarBottomOffset),
                             componentScope = getComponentScope(),

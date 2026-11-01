@@ -867,6 +867,9 @@
     <string name="amity_social_placeholder_image_alt_text_hint_message">Describe this photo briefly to help visually impaired users understand its content</string>
     <string name="amity_social_placeholder_post_composer_body_clip_placeholder">What\'s going on? (optional)</string>
     <string name="amity_social_placeholder_post_composer_body_placeholder">What\'s going on...</string>
+    <string name="amity_social_club_update_composer_toggle_title">Post as Club Update</string>
+    <string name="amity_social_club_update_composer_toggle_description">Members can read this update but cannot react or comment on it.</string>
+    <string name="amity_social_club_update_badge">Club Update</string>
     <string name="amity_social_placeholder_report_text_placeholder">Share more details about this issue</string>
     <string name="amity_social_placeholder_search_community_user_placeholder">Search community and user</string>
     <string name="amity_social_label_optional">(Optional)</string>

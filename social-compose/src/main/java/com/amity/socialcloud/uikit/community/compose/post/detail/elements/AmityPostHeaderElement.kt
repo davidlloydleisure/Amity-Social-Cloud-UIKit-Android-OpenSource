@@ -43,6 +43,8 @@ import com.amity.socialcloud.uikit.common.utils.clickableWithoutRipple
 import com.amity.socialcloud.uikit.common.utils.getIcon
 import com.amity.socialcloud.uikit.community.compose.AmitySocialBehaviorHelper
 import com.amity.socialcloud.uikit.common.compose.R as CommonComposeR
+import com.amity.socialcloud.uikit.community.compose.post.clubupdate.AmityClubUpdateBadge
+import com.amity.socialcloud.uikit.community.compose.post.clubupdate.isClubUpdate
 import com.amity.socialcloud.uikit.community.compose.R
 import com.amity.socialcloud.uikit.community.compose.post.detail.AmityPostCategory
 import com.amity.socialcloud.uikit.community.compose.post.detail.AmityPostDetailPageViewModel
@@ -352,6 +354,10 @@ fun AmityPostHeaderElement(
                         )
                     }
                 }
+            }
+
+            if (post.isClubUpdate()) {
+                AmityClubUpdateBadge()
             }
 
             if (category == AmityPostCategory.PIN || category == AmityPostCategory.PIN_AND_ANNOUNCEMENT) {

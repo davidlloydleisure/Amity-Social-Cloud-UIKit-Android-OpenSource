@@ -133,6 +133,8 @@ import com.amity.socialcloud.uikit.community.compose.ui.components.mentions.Prod
 import com.amity.socialcloud.uikit.community.compose.ui.components.mentions.UrlHighlight
 import com.google.gson.JsonObject
 import com.amity.socialcloud.uikit.community.compose.localization.DefaultAmitySocialStringProvider
+import com.amity.socialcloud.uikit.community.compose.post.clubupdate.AmityClubUpdateToggle
+import com.amity.socialcloud.uikit.community.compose.post.clubupdate.isClubUpdate
 import com.amity.socialcloud.uikit.community.compose.localization.amitySocialConfigString
 import com.amity.socialcloud.uikit.community.compose.localization.amitySocialString
 import com.amity.socialcloud.uikit.common.ui.theme.amityColorWhite
@@ -371,6 +373,8 @@ fun AmityPostComposerPage(
     // suppressed (a link can still be typed, it just won't render a preview card).
     val selectedEvent by viewModel.selectedEvent.collectAsState()
     val attachedEventState by viewModel.attachedEventState.collectAsState()
+    val isClubUpdate by viewModel.isClubUpdate.collectAsState()
+    val canCreateClubUpdate by viewModel.canCreateClubUpdate.collectAsState()
     val attachedEventId =
         (options as? AmityPostComposerOptions.AmityPostComposerCreateOptions)?.attachedEventId
     // Event-post mode covers both create (an event was attached) and edit (the post being edited
@@ -406,7 +410,9 @@ fun AmityPostComposerPage(
         originalMediaProductTagIds,
         originalTextProductTagIds,
         selectedEvent,
-        attachedEventState
+        attachedEventState,
+        isClubUpdate,
+        post,
     ) {
         fun isContentReady(
             titleText: String,
@@ -480,9 +486,11 @@ fun AmityPostComposerPage(
                 val hasLinkPreviewChanged = (initialLinkPreviewWasShown && isLinkPreviewDismissed) ||
                                            (!initialLinkPreviewWasShown && currentlyShowingPreview)
 
+                val hasClubUpdateChanged = isClubUpdate != (post?.isClubUpdate() == true)
+
                 val isContentValid = isContentReady(titleText, localPostText, selectedMediaFiles)
 
-                (hasTitleChanged || hasTextChanged || hasAttachmentsChanged || hasLinkPreviewChanged || hasAttachmentProductTagsChanged) && isContentValid
+                (hasTitleChanged || hasTextChanged || hasAttachmentsChanged || hasLinkPreviewChanged || hasAttachmentProductTagsChanged || hasClubUpdateChanged) && isContentValid
             } else if (isEditClipMode) {
                 // Edit clip mode validation
                 val hasTextChanged = localPostText.trim() != postBodyText.trim()
@@ -1415,6 +1423,16 @@ fun AmityPostComposerPage(
                 !isLinkPreviewDismissed && !hasStoredLinkMetadata
 
 
+
+        // Club Update (APP-15330): not offered for event and clip posts, same as iOS.
+        if (canCreateClubUpdate && !isEventPost && !isCreateClipMode && !isEditClipMode) {
+            item {
+                AmityClubUpdateToggle(
+                    isClubUpdate = isClubUpdate,
+                    onChange = viewModel::setClubUpdate,
+                )
+            }
+        }
 
         // PDT-4615: the !isInEditMode gate here is what suppressed the preview when editing a post.
         // It was removed once already; the pin-event-as-post work added !isEventPost to the old
