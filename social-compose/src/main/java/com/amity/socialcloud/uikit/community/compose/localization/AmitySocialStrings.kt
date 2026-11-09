@@ -1108,6 +1108,9 @@ object AmitySocialStrings {
         "amity_social_placeholder_event_setup_event_details_placeholder" to R.string.amity_social_placeholder_event_setup_event_details_placeholder,
         "amity_social_placeholder_post_composer_body_clip_placeholder" to R.string.amity_social_placeholder_post_composer_body_clip_placeholder,
         "amity_social_placeholder_post_composer_body_placeholder" to R.string.amity_social_placeholder_post_composer_body_placeholder,
+        "amity_social_club_update_composer_toggle_title" to R.string.amity_social_club_update_composer_toggle_title,
+        "amity_social_club_update_composer_toggle_description" to R.string.amity_social_club_update_composer_toggle_description,
+        "amity_social_club_update_badge" to R.string.amity_social_club_update_badge,
         "amity_social_placeholder_search_community_user_placeholder" to R.string.amity_social_placeholder_search_community_user_placeholder,
         "amity_social_label_optional" to R.string.amity_social_label_optional,
 

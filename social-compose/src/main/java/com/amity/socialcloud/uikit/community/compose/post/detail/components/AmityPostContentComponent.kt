@@ -63,6 +63,8 @@ import com.amity.socialcloud.uikit.community.compose.post.detail.menu.AmityPostM
 import com.amity.socialcloud.uikit.community.compose.post.detail.menu.AmityPostMenuDialogUIState
 import com.amity.socialcloud.uikit.community.compose.post.detail.menu.AmityPostMenuSheetUIState
 import com.amity.socialcloud.uikit.community.compose.post.detail.menu.AmityPostMenuViewModel
+import com.amity.socialcloud.uikit.community.compose.post.clubupdate.clubUpdateCard
+import com.amity.socialcloud.uikit.community.compose.post.clubupdate.isClubUpdate
 import kotlinx.coroutines.launch
 import com.amity.socialcloud.uikit.community.compose.localization.DefaultAmitySocialStringProvider
 
@@ -91,6 +93,9 @@ fun AmityPostContentComponent(
     val isPostDetailPage = remember(style) {
         style == AmityPostContentComponentStyle.DETAIL
     }
+
+    // Club Update (APP-15330): read-only post — no reactions, no comments.
+    val isClubUpdate = post.isClubUpdate()
 
     // PDT-4606: isEventHost describes the POST's author, so it must not be handed to a comment.
     // Comments need the host id and compare it against their own creator. Callers that still only
@@ -231,6 +236,7 @@ fun AmityPostContentComponent(
     AmityBaseComponent(componentId = "post_content") {
         Column(
             modifier = modifier
+                .clubUpdateCard(isClubUpdate, isFeed = !isPostDetailPage)
                 .fillMaxWidth()
                 .background(AmityTheme.colors.background)
                 .clickableWithoutRipple {
@@ -400,22 +406,26 @@ fun AmityPostContentComponent(
                 post = post,
             )
 
-            AmityPostEngagementView(
-                modifier = modifier,
-                pageScope = pageScope,
-                componentScope = getComponentScope(),
-                post = post,
-                isPostDetailPage = isPostDetailPage,
-                isNonMemberOfCommunity = isNonMemberOfCommunity,
-                shareButtonClick = { postId ->
-                    viewModel.updateSheetUIState(AmityPostMenuSheetUIState.OpenShareSheet(postId))
-                },
-                onCommentAction = {
-                    onTapAction()
-                }
-            )
+            if (isClubUpdate) {
+                Spacer(modifier = Modifier.height(12.dp))
+            } else {
+                AmityPostEngagementView(
+                    modifier = modifier,
+                    pageScope = pageScope,
+                    componentScope = getComponentScope(),
+                    post = post,
+                    isPostDetailPage = isPostDetailPage,
+                    isNonMemberOfCommunity = isNonMemberOfCommunity,
+                    shareButtonClick = { postId ->
+                        viewModel.updateSheetUIState(AmityPostMenuSheetUIState.OpenShareSheet(postId))
+                    },
+                    onCommentAction = {
+                        onTapAction()
+                    }
+                )
+            }
 
-            if (!isPostDetailPage && post.getCommentCount() > 0) {
+            if (!isClubUpdate && !isPostDetailPage && post.getCommentCount() > 0) {
                 post.getLatestComments()
                     .firstOrNull { !it.isDeleted() && it.getFlagCount() == 0 }
                     ?.let { latestComment ->

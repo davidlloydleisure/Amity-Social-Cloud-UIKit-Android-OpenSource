@@ -20,6 +20,9 @@ import com.amity.socialcloud.sdk.model.social.community.AmityCommunity
 import com.amity.socialcloud.sdk.model.social.event.AmityEvent
 import com.amity.socialcloud.sdk.model.social.event.AmityEventStatus
 import com.amity.socialcloud.sdk.model.social.post.AmityPost
+import com.amity.socialcloud.sdk.model.core.permission.AmityPermission
+import com.amity.socialcloud.uikit.community.compose.post.clubupdate.isClubUpdate
+import com.amity.socialcloud.uikit.community.compose.post.clubupdate.withClubUpdateFlag
 import com.amity.socialcloud.uikit.common.service.AmityFileService
 import com.amity.socialcloud.uikit.community.compose.post.model.AmityFileUploadState
 import com.amity.socialcloud.uikit.community.compose.post.model.AmityPostMedia
@@ -109,6 +112,18 @@ class AmityPostComposerPageViewModel : AmityMediaAttachmentViewModel() {
 
     // Share-event-as-post: id of the event attached to this post, used to create the event post.
     private var attachedEventId: String? = null
+
+    // Club Update (APP-15330): read-only post marked in its metadata. Only users with
+    // CREATE_PRIVILEGED_POST in the target community can publish one.
+    private val _isClubUpdate = MutableStateFlow(false)
+    val isClubUpdate: StateFlow<Boolean> = _isClubUpdate.asStateFlow()
+
+    private val _canCreateClubUpdate = MutableStateFlow(false)
+    val canCreateClubUpdate: StateFlow<Boolean> = _canCreateClubUpdate.asStateFlow()
+
+    // Whether the edited post was a Club Update before this edit — turning it off has to
+    // clear the marker on the server.
+    private var wasClubUpdate = false
 
     private val mediaMap = java.util.LinkedHashMap<String, AmityPostMedia>()
     private val uploadedMediaMap = LinkedHashMap<String, AmityFileInfo>()
@@ -567,6 +582,10 @@ class AmityPostComposerPageViewModel : AmityMediaAttachmentViewModel() {
                 this.community = options.community
                 this.attachedEventId = options.attachedEventId
                 loadAttachedEvent(options.attachedEventId)
+                if (options.targetType == AmityPostTargetType.COMMUNITY) {
+                    (options.targetId ?: options.community?.getCommunityId())
+                        ?.let(::checkClubUpdatePermission)
+                }
             }
 
             is AmityPostComposerOptions.AmityPostComposerCreateClipOptions -> {
@@ -623,6 +642,23 @@ class AmityPostComposerPageViewModel : AmityMediaAttachmentViewModel() {
         }
     }
 
+    fun setClubUpdate(isClubUpdate: Boolean) {
+        _isClubUpdate.value = isClubUpdate
+    }
+
+    private fun checkClubUpdatePermission(communityId: String) {
+        addDisposable(
+            AmityCoreClient.hasPermission(AmityPermission.CREATE_PRIVILEGED_POST)
+                .atCommunity(communityId)
+                .check()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .doOnNext { _canCreateClubUpdate.value = it }
+                .doOnError { _canCreateClubUpdate.value = false }
+                .subscribe()
+        )
+    }
+
     private fun preparePostData(postId: String) {
         getPostDetails(
             postId = postId,
@@ -632,6 +668,10 @@ class AmityPostComposerPageViewModel : AmityMediaAttachmentViewModel() {
             onPostLoaded = { post ->
                 this.community = (post.getTarget() as? AmityPost.Target.COMMUNITY)?.getCommunity()
                 this._post.value = post
+                wasClubUpdate = post.isClubUpdate()
+                _isClubUpdate.value = wasClubUpdate
+                (post.getTarget() as? AmityPost.Target.COMMUNITY)?.getCommunityId()
+                    ?.let(::checkClubUpdatePermission)
                 when (val postData = post.getData()) {
                     is AmityPost.Data.TEXT -> prepareTextPost(post)
                     is AmityPost.Data.IMAGE -> prepareImagePost(post)
@@ -1165,6 +1205,7 @@ class AmityPostComposerPageViewModel : AmityMediaAttachmentViewModel() {
         }
 
         val metadata = createMetadata(mentionedUsers, hashtags)
+            .withClubUpdateFlag(isClubUpdate = _isClubUpdate.value, wasClubUpdate = wasClubUpdate)
         val mentionUserIds = mentionedUsers.map { it.getUserId() }.toSet()
         postEditor
             .apply {
@@ -1208,6 +1249,7 @@ class AmityPostComposerPageViewModel : AmityMediaAttachmentViewModel() {
         val targetId = getTargetIdForPostCreation()
         // Create metadata with both mentions and hashtags
         val metadata = createMetadata(mentionedUsers, hashtags)
+            .withClubUpdateFlag(isClubUpdate = _isClubUpdate.value)
 
 
         val mentionUserIds = mentionedUsers.map { it.getUserId() }.toSet()
